@@ -43,6 +43,7 @@ export async function createMemoryDb(): Promise<{ db: Db; pg: PGlite }> {
 
 /** Real Argon2id hashes for the seeded accounts (admin vs students); no forced first-login change. */
 export async function setSeedPasswords(db: Db, passwords: { admin: string; student: string }): Promise<void> {
-  const [adminHash, studentHash] = await Promise.all([hashPassword(passwords.admin), hashPassword(passwords.student)]);
+  const adminHash = await hashPassword(passwords.admin);
+  const studentHash = await hashPassword(passwords.student);
   await db.query(`UPDATE users SET password_hash = CASE WHEN role = 'STUDENT' THEN $2 ELSE $1 END, must_change_password = FALSE`, [adminHash, studentHash]);
 }
