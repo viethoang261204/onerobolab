@@ -1,0 +1,21 @@
+{
+  "name": "@robolab/simulation",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fixed-timestep simulation controller that orchestrates all engines.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "@robolab/shared": "workspace:*",
+    "@robolab/map-engine": "workspace:*",
+    "@robolab/robot-engine": "workspace:*",
+    "@robolab/physics-engine": "workspace:*",
+    "@robolab/sensor-engine": "workspace:*",
+    "@robolab/mission-engine": "workspace:*",
+    "@robolab/scoring-engine": "workspace:*"
+  }
+}

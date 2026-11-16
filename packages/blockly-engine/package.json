@@ -1,0 +1,15 @@
+{
+  "name": "@robolab/blockly-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Blockly block definitions, toolbox and compiler to RoboLab IR.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "@robolab/shared": "workspace:*"
+  }
+}

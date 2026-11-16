@@ -1,0 +1,13 @@
+-- =============================================================================
+-- 0003 — Publishing workflow: DRAFT → REVIEW → PUBLISHED → ARCHIVED (Admin Phase 3)
+--
+-- Apply to a database created before Admin Phase 3:
+--   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/0003_review_status.sql
+-- (Fresh installs get this from schema.sql already.) Safe to run twice.
+--
+-- REVIEW content is never shown to students: get_student_level_states and the
+-- student API only return PUBLISHED curricula, worlds, levels and lessons.
+-- Not wrapped in BEGIN/COMMIT: a new enum value cannot be used inside the
+-- transaction that adds it, and this statement is atomic on its own.
+-- =============================================================================
+ALTER TYPE content_status ADD VALUE IF NOT EXISTS 'REVIEW' BEFORE 'PUBLISHED';

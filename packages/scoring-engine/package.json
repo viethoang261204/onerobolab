@@ -1,0 +1,15 @@
+{
+  "name": "@robolab/scoring-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pure score calculation from mission state and run stats.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "@robolab/shared": "workspace:*"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@robolab/mission-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Mission objectives, success/failure detection and timer.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "@robolab/shared": "workspace:*"
+  }
+}

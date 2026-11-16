@@ -1,0 +1,40 @@
+{
+  "name": "@robolab/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "RoboLab browser app: UI shell and 3D renderer.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.1",
+    "@robolab/map-engine": "workspace:*",
+    "@robolab/mission-engine": "workspace:*",
+    "@robolab/physics-engine": "workspace:*",
+    "@robolab/robot-engine": "workspace:*",
+    "@robolab/scoring-engine": "workspace:*",
+    "@robolab/sensor-engine": "workspace:*",
+    "@robolab/world-engine": "workspace:*",
+    "@robolab/shared": "workspace:*",
+    "lucide-react": "^1.48.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "three": "^0.186.1",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.6.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.1"
+  }
+}

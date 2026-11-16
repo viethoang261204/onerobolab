@@ -1,0 +1,15 @@
+{
+  "name": "@robolab/robot-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Robot state, IR interpreter and differential-drive controller.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "@robolab/shared": "workspace:*"
+  }
+}

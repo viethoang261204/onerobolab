@@ -1,0 +1,27 @@
+{
+  "name": "robolab",
+  "private": true,
+  "version": "0.0.0",
+  "description": "RoboLab — browser-based 3D educational robotics simulator",
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @robolab/web dev",
+    "build": "pnpm --filter @robolab/web build",
+    "preview": "pnpm --filter @robolab/web preview",
+    "typecheck": "tsc -p tsconfig.packages.json && pnpm --filter @robolab/web typecheck && pnpm --filter @robolab/api typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "pnpm typecheck && pnpm test",
+    "dev:api": "pnpm --filter @robolab/api dev",
+    "build:api": "pnpm --filter @robolab/api build",
+    "dev:api:memory": "pnpm --filter @robolab/api dev:memory"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  }
+}

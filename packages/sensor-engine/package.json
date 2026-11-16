@@ -1,0 +1,15 @@
+{
+  "name": "@robolab/sensor-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Distance, line, color and touch sensor sampling.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "@robolab/shared": "workspace:*"
+  }
+}
