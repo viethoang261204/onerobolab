@@ -8,7 +8,7 @@ const Env = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   HOST: z.string().default('0.0.0.0'),
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  DATABASE_URL: z.string().min(1).optional(),
   /** HMAC key for session-token hashes. ≥ 32 characters of randomness. */
   AUTH_SECRET: z.string().min(32, 'AUTH_SECRET must be at least 32 characters'),
   /** Comma-separated list of allowed browser origins (e.g. https://onerobolab.example.com). */
