@@ -1,7 +1,7 @@
-import type { Area2D, Rect2D, Vec2 } from '../types/geometry';
-import type { CheckpointEntity, MapDefinition, MapEntityOf, MapEntityType } from '../types/map';
-import type { EntityId } from '../types/ids';
-import type { SensorColor } from '../types/sensor';
+import type { Area2D, Rect2D, Vec2 } from '../types/geometry.ts';
+import type { CheckpointEntity, MapDefinition, MapEntityOf, MapEntityType } from '../types/map.ts';
+import type { EntityId } from '../types/ids.ts';
+import type { SensorColor } from '../types/sensor.ts';
 
 /** What the floor looks like at a point, for line/color sensors. */
 export interface SurfaceSample {

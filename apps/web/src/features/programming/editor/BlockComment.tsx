@@ -1,6 +1,6 @@
 import { MessageSquare, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import type { BlockId } from '../blocks/block-types';
+import type { BlockId } from '@robolab/blocks';
 import { useProgramStore } from '../state/program-store';
 
 interface BlockCommentProps {

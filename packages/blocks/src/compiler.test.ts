@@ -1,8 +1,8 @@
 import { ROVER } from '@robolab/robot-engine';
 import type { Program, Statement } from '@robolab/shared';
 import { describe, expect, it } from 'vitest';
-import { buildProgram, distanceBelow, fwd, ifThen, repeat, right, stop, type Spec } from '../test-utils';
-import { compileProgram } from './compiler';
+import { buildProgram, distanceBelow, fwd, ifThen, repeat, right, stop, type Spec } from './test-utils.ts';
+import { compileProgram } from './compiler.ts';
 
 function compile(stack: Spec[], variables?: string[]): Program {
   const r = compileProgram(buildProgram(stack, variables), ROVER);

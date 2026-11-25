@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { START_ID } from '../blocks/block-model';
-import type { BlockId } from '../blocks/block-types';
-import { buildParentIndex } from '../blocks/block-utils';
+import { START_ID } from '@robolab/blocks';
+import type { BlockId } from '@robolab/blocks';
+import { buildParentIndex } from '@robolab/blocks';
 import { useProgramStore } from '../state/program-store';
 import { deleteWithAnimation } from './block-actions';
 

@@ -1,10 +1,8 @@
-import { Braces, Calculator, Flag, Move, Radar, Repeat, Split, Variable, type LucideIcon } from 'lucide-react';
-import type { ArgDef, BlockCategoryId, BlockDef, BlockType, DropdownOption } from './block-types';
+import type { ArgDef, BlockCategoryId, BlockDef, BlockType, DropdownOption } from './block-types.ts';
 
 export interface CategoryDef {
   readonly id: BlockCategoryId;
   readonly label: string;
-  readonly icon: LucideIcon;
   /** CSS colour (design token). */
   readonly color: string;
   /** Blocks shown in this category's palette, in order. */
@@ -155,26 +153,24 @@ export function getBlockDef(type: BlockType): BlockDef {
 export const isBlockType = (value: string): value is BlockType => BY_TYPE.has(value as BlockType);
 
 export const CATEGORIES: readonly CategoryDef[] = [
-  { id: 'events', label: 'Events', icon: Flag, color: 'var(--color-cat-events)', palette: ['event.start', 'event.button', 'event.sensor'] },
+  { id: 'events', label: 'Events', color: 'var(--color-cat-events)', palette: ['event.start', 'event.button', 'event.sensor'] },
   {
     id: 'movement',
     label: 'Movement',
-    icon: Move,
     color: 'var(--color-cat-movement)',
     palette: ['motion.forward', 'motion.backward', 'motion.turnLeft', 'motion.turnRight', 'motion.stop', 'motion.speed', 'motion.goTo', 'action.pick', 'action.drop'],
   },
   {
     id: 'control',
     label: 'Control',
-    icon: Repeat,
     color: 'var(--color-cat-control)',
     palette: ['control.wait', 'control.repeat', 'control.forever', 'control.while', 'control.until', 'control.break', 'control.if', 'control.ifElse'],
   },
-  { id: 'sensors', label: 'Sensors', icon: Radar, color: 'var(--color-cat-sensors)', palette: ['sensor.distance', 'sensor.line', 'sensor.color', 'sensor.obstacle', 'sensor.value', 'sensor.robotX', 'sensor.robotY'] },
-  { id: 'logic', label: 'Logic', icon: Split, color: 'var(--color-cat-logic)', palette: ['control.if', 'control.ifElse', 'logic.compare', 'logic.and', 'logic.or', 'logic.not'] },
-  { id: 'math', label: 'Math', icon: Calculator, color: 'var(--color-cat-math)', palette: ['math.add', 'math.subtract', 'math.multiply', 'math.divide', 'math.random'] },
-  { id: 'variables', label: 'Variables', icon: Variable, color: 'var(--color-cat-variables)', palette: ['variable.set', 'variable.change', 'variable.get', 'mission.value'] },
-  { id: 'functions', label: 'Functions', icon: Braces, color: 'var(--color-cat-functions)', palette: ['function.define', 'function.call'] },
+  { id: 'sensors', label: 'Sensors', color: 'var(--color-cat-sensors)', palette: ['sensor.distance', 'sensor.line', 'sensor.color', 'sensor.obstacle', 'sensor.value', 'sensor.robotX', 'sensor.robotY'] },
+  { id: 'logic', label: 'Logic', color: 'var(--color-cat-logic)', palette: ['control.if', 'control.ifElse', 'logic.compare', 'logic.and', 'logic.or', 'logic.not'] },
+  { id: 'math', label: 'Math', color: 'var(--color-cat-math)', palette: ['math.add', 'math.subtract', 'math.multiply', 'math.divide', 'math.random'] },
+  { id: 'variables', label: 'Variables', color: 'var(--color-cat-variables)', palette: ['variable.set', 'variable.change', 'variable.get', 'mission.value'] },
+  { id: 'functions', label: 'Functions', color: 'var(--color-cat-functions)', palette: ['function.define', 'function.call'] },
 ];
 
 export const categoryOf = (type: BlockType): CategoryDef => {

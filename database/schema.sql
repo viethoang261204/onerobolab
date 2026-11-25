@@ -587,9 +587,14 @@ CREATE TABLE level_attempts (
   collisions              INTEGER CHECK (collisions IS NULL OR collisions >= 0),
   error_message           TEXT,
   result                  JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(result) = 'object'),
+  -- Layout (mission_settings.variants index) and random seed the run was played with; the API judge replays exactly these (migration 0009).
+  layout_index            SMALLINT NOT NULL DEFAULT 0,
+  seed                    INTEGER NOT NULL DEFAULT 1,
   started_at              TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   completed_at            TIMESTAMPTZ,
   UNIQUE (student_id, level_id, attempt_number),
+  CONSTRAINT level_attempts_layout_chk CHECK (layout_index BETWEEN 0 AND 99),
+  CONSTRAINT level_attempts_seed_chk CHECK (seed >= 0),
   CONSTRAINT level_attempts_times_chk CHECK (completed_at IS NULL OR completed_at >= started_at)
 );
 CREATE INDEX level_attempts_student_idx ON level_attempts (student_id, started_at DESC);

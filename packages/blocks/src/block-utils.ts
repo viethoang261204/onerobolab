@@ -1,11 +1,22 @@
-import { getBlockDef } from './block-registry';
-import type { BlockFragment, BlockId, BlockInstance, BlockType, ParentRef, ProgramState } from './block-types';
+import { getBlockDef } from './block-registry.ts';
+import type { BlockFragment, BlockId, BlockInstance, BlockType, ParentRef, ProgramState } from './block-types.ts';
 
 let counter = 0;
+let salt = '0000';
+
+/**
+ * Per-session salt for new block ids. Packages stay deterministic (no
+ * `Math.random`), so the editor sets a random salt at startup; without one,
+ * ids are still unique within a session.
+ */
+export function setBlockIdSalt(value: string): void {
+  salt = value.replace(/[^a-z0-9]/gi, '').slice(0, 8) || '0000';
+}
+
 /** Unique, readable block ids (`b-k3x9-12`). */
 export function newBlockId(): BlockId {
   counter += 1;
-  return `b-${Math.random().toString(36).slice(2, 6)}-${counter.toString(36)}`;
+  return `b-${salt}-${counter.toString(36)}`;
 }
 
 /** New block with the default values from its definition. */

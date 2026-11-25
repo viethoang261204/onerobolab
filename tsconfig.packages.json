@@ -3,7 +3,9 @@
   "compilerOptions": {
     // Engine packages are pure simulation logic: no DOM, no React, no Three.js.
     "lib": ["ES2022"],
-    "types": []
+    "types": [],
+    // Node runs these files directly (API): erasable TypeScript only.
+    "erasableSyntaxOnly": true
   },
   "include": ["packages/*/src/**/*.ts"]
 }

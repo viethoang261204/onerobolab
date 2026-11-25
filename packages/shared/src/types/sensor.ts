@@ -1,5 +1,5 @@
-import type { Vec3 } from './geometry';
-import type { SensorId } from './ids';
+import type { Vec3 } from './geometry.ts';
+import type { SensorId } from './ids.ts';
 
 export type SensorKind = 'distance' | 'line' | 'color' | 'touch';
 

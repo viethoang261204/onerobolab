@@ -1,11 +1,11 @@
 import { degToRad, type CompileDiagnostic, type CompileResult, type ProgramCompiler, type RobotDefinition, type Statement } from '@robolab/shared';
-import { START_ID } from '../blocks/block-model';
-import { getBlockDef } from '../blocks/block-registry';
-import type { BlockId, BlockInstance, ProgramState } from '../blocks/block-types';
-import { chainIds } from '../blocks/block-utils';
-import { checkStructure, validateProgram } from '../blocks/block-validation';
-import { CompileProblem, compileError, compileWarning } from './compiler-errors';
-import { compileNumberArg, compileValueBlock, type ExprContext } from './expression-compiler';
+import { START_ID } from './block-model.ts';
+import { getBlockDef } from './block-registry.ts';
+import type { BlockId, BlockInstance, ProgramState } from './block-types.ts';
+import { chainIds } from './block-utils.ts';
+import { checkStructure, validateProgram } from './block-validation.ts';
+import { CompileProblem, compileError, compileWarning } from './compiler-errors.ts';
+import { compileNumberArg, compileValueBlock, type ExprContext } from './expression-compiler.ts';
 
 /** Student units → SI factors used by the IR. */
 const CM = 0.01;

@@ -1,8 +1,8 @@
 import type { Expression, Pose2D, Program, Statement } from '@robolab/shared';
 import { describe, expect, it } from 'vitest';
-import { ROVER } from '../catalog';
-import { stepDifferentialDrive } from '../kinematics';
-import { CommandQueue, GRIP_SECONDS, type CommandQueueOptions } from './command-queue';
+import { ROVER } from '../catalog.ts';
+import { stepDifferentialDrive } from '../kinematics.ts';
+import { CommandQueue, GRIP_SECONDS, type CommandQueueOptions } from './command-queue.ts';
 
 const DT = 1 / 60;
 const num = (value: number): Expression => ({ kind: 'number', value });

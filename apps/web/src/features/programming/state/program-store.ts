@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import { logToConsole } from '../../../stores/console-store';
-import * as M from '../blocks/block-model';
-import { blockName, getBlockDef } from '../blocks/block-registry';
-import type { BlockFragment, BlockId, BlockType, DropTarget, FieldValue, ProgramState } from '../blocks/block-types';
-import { cloneFragment, createBlock, extractFragment, fragmentFromBlock } from '../blocks/block-utils';
-import { validateProgram, type BlockIssue } from '../blocks/block-validation';
+import * as M from '@robolab/blocks';
+import { blockName, getBlockDef } from '@robolab/blocks';
+import type { BlockFragment, BlockId, BlockType, DropTarget, FieldValue, ProgramState } from '@robolab/blocks';
+import { cloneFragment, createBlock, extractFragment, fragmentFromBlock } from '@robolab/blocks';
+import { validateProgram, type BlockIssue } from '@robolab/blocks';
 import { migrateLevelId } from '../../../content/levels/registry';
 import { browserStorage, readJson, type KeyValueStorage } from '../../persistence/storage';
-import { createStarterProgram } from '../blocks/sample-program';
-import { parseProgram, serializeProgram } from '../blocks/serialization';
+import { createStarterProgram } from '@robolab/blocks';
+import { parseProgram, serializeProgram } from '@robolab/blocks';
 import { clipboard } from './clipboard';
 import { emptyHistory, record, redo, undo, type History } from './history';
 

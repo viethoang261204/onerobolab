@@ -7,7 +7,8 @@ import { assertPlayable, isUuid, levelAccess, levelStates, loadLevelRules, type 
 import { countRunnableBlocks, LIMITS, validateProgram } from '../domain/program.ts';
 import { touchStreak } from '../domain/rewards.ts';
 import { findProgram, lockProgress, recordRun, snapshotVersion } from '../domain/runs.ts';
-import { RunReportSchema, scoreRun } from '../domain/scoring.ts';
+import { RunSetupSchema, savedProgramJudge } from '../domain/judge.ts';
+import { RunReportSchema } from '../domain/scoring.ts';
 import { AppError, conflict, notFound } from '../http/errors.ts';
 
 const LevelParam = z.object({ levelId: z.string().min(1).max(80) }).strict();
@@ -22,8 +23,13 @@ const SaveProgramBody = z
   })
   .strict();
 
-const AttemptBody = z.object({ status: z.enum(['PASSED', 'FAILED', 'ERROR', 'ABORTED']), result: RunReportSchema }).strict();
-const SubmissionBody = z.object({ result: RunReportSchema }).strict();
+const AttemptBody = z
+  .object({ status: z.enum(['PASSED', 'FAILED', 'ERROR', 'ABORTED']), result: RunReportSchema })
+  .extend(RunSetupSchema.shape)
+  .strict();
+const SubmissionBody = z.object({ result: RunReportSchema }).extend(RunSetupSchema.shape).strict();
+/** The attempts route's status as a client outcome. */
+const CLIENT_OUTCOME = { PASSED: 'COMPLETED', FAILED: 'FAILED', ERROR: 'ERROR', ABORTED: 'STOPPED' } as const;
 
 const SettingsBody = z
   .object({
@@ -294,23 +300,27 @@ export function registerStudentRoutes(app: FastifyInstance, { db }: AppDeps) {
     const access = await levelAccess(db, me.id, levelId);
     assertPlayable(access);
     const rules = await loadLevelRules(db, access.levelId);
+    const setup = { layout: body.layout, seed: body.seed };
+    const judge = await savedProgramJudge(db, me.id, access.levelId, rules, setup, body.result, CLIENT_OUTCOME[body.status]);
 
     const attempt = await db.tx(async (q) => {
       const program = await findProgram(q, me.id, access.levelId, true);
       if (!program) throw conflict('Save your program before running it.', 'PROGRAM_REQUIRED');
       const version = await snapshotVersion(q, program.id, 'AUTOSAVE');
-      const { count } = countRunnableBlocks(version.program);
-      const scored = scoreRun(rules, body.result, count);
-      // Server decides PASSED/FAILED; client-side crashes stay ERROR / ABORTED.
-      const status = body.status === 'ERROR' || body.status === 'ABORTED' ? body.status : scored.passed ? 'PASSED' : 'FAILED';
+      const { verdict, count } = judge(version.program);
+      const { scored, report } = verdict;
+      // The server decides PASSED / FAILED / ERROR from its replay; a run the student stopped stays ABORTED.
+      const status = scored.passed ? 'PASSED' : body.status === 'ABORTED' ? 'ABORTED' : verdict.failedStatus;
       const { rows } = await q.query<{ id: string; attemptNumber: number }>(
-        `INSERT INTO level_attempts (student_id, level_id, program_id, program_version_id, status, score, stars, execution_time_seconds, block_count, collisions, error_message, result, completed_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, CURRENT_TIMESTAMP)
+        `INSERT INTO level_attempts (student_id, level_id, program_id, program_version_id, status, score, stars, execution_time_seconds, block_count, collisions, error_message, result,
+                                     layout_index, seed, completed_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13, $14, CURRENT_TIMESTAMP)
          RETURNING id, attempt_number AS "attemptNumber"`,
         [
           me.id, access.levelId, program.id, version.versionId, status, status === 'PASSED' ? scored.score : null, status === 'PASSED' ? scored.stars : null,
-          body.result.timeSeconds, count, body.result.collisions, body.result.errorMessage ?? null,
-          JSON.stringify({ reported: body.result, objectives: scored.objectives, criteria: scored.criteria, reasons: scored.reasons }),
+          report.timeSeconds, count, report.collisions, report.errorMessage ?? null,
+          JSON.stringify({ reported: body.result, judged: report, judge: verdict.judge, objectives: scored.objectives, criteria: scored.criteria, reasons: scored.reasons }),
+          setup.layout, setup.seed,
         ],
       );
       await lockProgress(q, me.id, access.levelId);
@@ -336,13 +346,15 @@ export function registerStudentRoutes(app: FastifyInstance, { db }: AppDeps) {
     const access = await levelAccess(db, me.id, levelId);
     assertPlayable(access);
     const rules = await loadLevelRules(db, access.levelId);
+    const setup = { layout: body.layout, seed: body.seed };
+    const judge = await savedProgramJudge(db, me.id, access.levelId, rules, setup, body.result, 'COMPLETED');
 
     const outcome = await db.tx(async (q) => {
       const program = await findProgram(q, me.id, access.levelId, true);
       if (!program) throw conflict('Save your program before submitting it.', 'PROGRAM_REQUIRED');
       const version = await snapshotVersion(q, program.id, 'SUBMISSION');
-      const { count, types } = countRunnableBlocks(version.program);
-      const scored = scoreRun(rules, body.result, count);
+      const { verdict, count, types } = judge(version.program);
+      const { scored } = verdict;
       const run = await recordRun(q, {
         studentId: me.id,
         levelId: access.levelId,
@@ -351,13 +363,15 @@ export function registerStudentRoutes(app: FastifyInstance, { db }: AppDeps) {
         blockCount: count,
         blockTypes: types,
         rules,
-        report: body.result,
+        report: verdict.report,
+        claimed: body.result,
+        judge: verdict.judge,
         scored,
         countAttempt: true,
         recordFailedSubmission: true,
       });
       return {
-        submission: { id: run.submissionId, status: run.passed ? 'PASSED' : 'FAILED', stars: scored.stars, score: scored.score, xpEarned: run.xpEarned, blockCount: count, executionTimeSeconds: body.result.timeSeconds },
+        submission: { id: run.submissionId, status: run.passed ? 'PASSED' : 'FAILED', stars: scored.stars, score: scored.score, xpEarned: run.xpEarned, blockCount: count, executionTimeSeconds: verdict.report.timeSeconds },
         criteria: scored.criteria,
         reasons: scored.reasons,
         newBest: run.newBest,

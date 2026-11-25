@@ -1,7 +1,7 @@
 import type { CompareOperator, Expression, RobotDefinition, SensorColor, SensorId, SensorKind } from '@robolab/shared';
-import { getBlockDef } from '../blocks/block-registry';
-import type { BlockId, BlockInstance, ProgramState } from '../blocks/block-types';
-import { CompileProblem } from './compiler-errors';
+import { getBlockDef } from './block-registry.ts';
+import type { BlockId, BlockInstance, ProgramState } from './block-types.ts';
+import { CompileProblem } from './compiler-errors.ts';
 
 export interface ExprContext {
   readonly program: ProgramState;

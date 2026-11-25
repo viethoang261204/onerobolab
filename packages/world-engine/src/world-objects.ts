@@ -50,7 +50,10 @@ export class WorldObjects {
   private openGates: EntityId[] = [];
   private held = new Map<EntityId, number>();
 
-  constructor(private readonly map: MapQuery) {
+  private readonly map: MapQuery;
+
+  constructor(map: MapQuery) {
+    this.map = map;
     this.reset();
   }
 

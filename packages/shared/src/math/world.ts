@@ -1,5 +1,5 @@
-import type { Vec2 } from '../types/geometry';
-import type { MoverEntity, SignalCycle, TrafficLightEntity } from '../types/map';
+import type { Vec2 } from '../types/geometry.ts';
+import type { MoverEntity, SignalCycle, TrafficLightEntity } from '../types/map.ts';
 
 /** A traffic light's colour. */
 export type SignalPhase = 'red' | 'green' | 'yellow';

@@ -7,8 +7,8 @@ import { openSimulator, openStudio, startMission } from '../../level-selection/s
 import { setProgressStore, useLevelStore } from '../../levels/level-store';
 import { LocalProgressStore } from '../../levels/progress';
 import { memoryStorage } from '../../persistence/storage';
-import { START_ID } from '../../programming/blocks/block-model';
-import { createBlock } from '../../programming/blocks/block-utils';
+import { START_ID } from '@robolab/blocks';
+import { createBlock } from '@robolab/blocks';
 import { checkProgram } from '../../programming/studio/program-check';
 import { setProgramStorage, useProgramStore } from '../../programming/state/program-store';
 import { useRouterStore } from '../../router/router-store';

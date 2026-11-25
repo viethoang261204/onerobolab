@@ -38,7 +38,7 @@ import {
   until,
   waitS,
   type Spec,
-} from '../programming/test-utils';
+} from '@robolab/blocks/test-utils';
 
 /** A reference program: the main script, its variables and functions. */
 export interface Solution {

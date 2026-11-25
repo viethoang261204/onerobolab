@@ -1,13 +1,13 @@
-import { entityId, mapId, missionId, robotId, type MapDefinition, type MissionDefinition, type Objective, type Vec2 } from '@robolab/shared';
+import { DEFAULT_SCORING, mapFromJson, missionFromStored, objectivesFromRows } from '@robolab/simulation';
+import { missionId, robotId, type MapDefinition, type MissionDefinition, type Objective, type Vec2 } from '@robolab/shared';
 import type { LevelDefinition, LevelScene } from '../../content/levels/types';
 import type { WorldDefinition, WorldTheme } from '../../content/worlds/types';
 import type { ApiDifficulty, ApiLevel, ApiObjective, ApiWorld, Catalog } from '../account/student-api';
-import type { BlockType } from '../programming/blocks/block-types';
-import { isBlockType } from '../programming/blocks/block-registry';
+import type { BlockType } from '@robolab/blocks';
+import { isBlockType } from '@robolab/blocks';
 import { isEnvironmentId } from '../simulator/environments/catalog';
 import type { LevelProgress, LevelStatus, ProgressData, ServerProgress } from '../levels/progress';
-import { briefingFrom, levelExtrasFrom, scoringFrom } from './mission-settings';
-import { objectiveFromRow } from './objective-codec';
+import { briefingFrom, levelExtrasFrom } from './mission-settings';
 
 /*
  * API catalog → the app's content model (WorldDefinition / LevelDefinition)
@@ -25,20 +25,7 @@ const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFin
 const isPoint = (v: unknown): v is Vec2 => isObj(v) && isNum(v.x) && isNum(v.z);
 
 /** The map JSON as a MapDefinition, or null when it isn't a complete map (e.g. a draft level). */
-export function toMap(raw: unknown, slug: string): MapDefinition | null {
-  if (!isObj(raw) || !isObj(raw.size) || !isNum(raw.size.x) || !isNum(raw.size.z)) return null;
-  if (!isPoint(raw.start) || !isObj(raw.finish) || !isPoint(raw.finish.center) || !Array.isArray(raw.entities)) return null;
-  const heading = (raw.start as unknown as Record<string, unknown>).heading;
-  return {
-    ...(raw as unknown as MapDefinition),
-    id: mapId(typeof raw.id === 'string' && raw.id ? raw.id : `level-${slug}`),
-    name: typeof raw.name === 'string' ? raw.name : slug,
-    schemaVersion: 1,
-    gridSize: isNum(raw.gridSize) ? raw.gridSize : 0.5,
-    floorColor: (typeof raw.floorColor === 'string' ? raw.floorColor : 'white') as MapDefinition['floorColor'],
-    start: { x: raw.start.x, z: raw.start.z, heading: isNum(heading) ? heading : 0 },
-  };
-}
+export const toMap = mapFromJson;
 
 /** Scene layout; without one, a straight road from start to goal. */
 export function toScene(raw: unknown, map: MapDefinition): LevelScene {
@@ -47,9 +34,7 @@ export function toScene(raw: unknown, map: MapDefinition): LevelScene {
 }
 
 /** API objectives → mission-engine objectives (the kinds the simulator can track). */
-export function toObjectives(objectives: readonly ApiObjective[]): Objective[] {
-  return objectives.map(objectiveFromRow).filter((o): o is Objective => o !== null);
-}
+export const toObjectives = (objectives: readonly ApiObjective[]): Objective[] => objectivesFromRows(objectives);
 
 export function worldFromApi(w: ApiWorld, bundled?: WorldDefinition): WorldDefinition {
   const pos = w.mapPosition;
@@ -82,19 +67,7 @@ export function levelFromApi(l: ApiLevel, number: number, bundled?: LevelDefinit
   const c = l.content;
   const settings = c?.missionSettings ?? {};
   const mission: MissionDefinition = c
-    ? {
-        id: missionId(`mission-${l.slug}`),
-        title: typeof settings.missionTitle === 'string' ? settings.missionTitle : l.title,
-        description: typeof settings.missionDescription === 'string' ? settings.missionDescription : (l.briefDescription ?? ''),
-        mapId: map.id,
-        robotId: robotId('rover'),
-        objectives: toObjectives(c.objectives),
-        timeLimit: isNum(settings.timeLimit) ? settings.timeLimit : null,
-        failOnCollision: settings.failOnCollision !== false,
-        scoring: scoringFrom(settings.scoring) ?? { completionPoints: 500, checkpointPoints: 100, timeBonus: null, efficiencyBonus: null, collisionPenalty: 100 },
-        ...(settings.stopInFinish === true && { stopInFinish: true }),
-        ...(settings.orderedCheckpoints === true && { orderedCheckpoints: true }),
-      }
+    ? missionFromStored({ slug: l.slug, title: l.title, briefDescription: l.briefDescription, missionSettings: settings, objectives: c.objectives }, map)
     : (bundled?.mission ?? {
         // Locked level: shown on cards only, never run.
         id: missionId(`mission-${l.slug}`),
@@ -105,7 +78,7 @@ export function levelFromApi(l: ApiLevel, number: number, bundled?: LevelDefinit
         objectives: [],
         timeLimit: null,
         failOnCollision: true,
-        scoring: { completionPoints: 500, checkpointPoints: 100, timeBonus: null, efficiencyBonus: null, collisionPenalty: 100 },
+        scoring: DEFAULT_SCORING,
       });
   const allowed = c ? c.allowedBlocks : null;
   const briefing = c ? briefingFrom(settings.briefing) : (bundled?.briefing ?? null);

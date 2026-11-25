@@ -5,14 +5,14 @@ import { LevelRegistry } from '../../../content/levels/registry';
 import { variantCount } from '../../../content/levels/variants';
 import { pickVariant } from '../../levels/variant-store';
 import { Analytics } from '../../analytics/analytics';
-import { START_ID } from '../../programming/blocks/block-model';
-import { blockName } from '../../programming/blocks/block-registry';
-import { subtreeIds } from '../../programming/blocks/block-utils';
+import { START_ID } from '@robolab/blocks';
+import { blockName } from '@robolab/blocks';
+import { subtreeIds } from '@robolab/blocks';
 import { useSettingsStore } from '../../settings/settings-store';
-import { compileProgram } from '../../programming/compiler/compiler';
+import { compileProgram } from '@robolab/blocks';
 import { getProgram, useProgramStore } from '../../programming/state/program-store';
 import { useRuntimeStore } from './runtime-store';
-import type { SimulationRuntime } from './SimulationRuntime';
+import type { SimulationRuntime } from '@robolab/simulation';
 
 let current: { runtime: SimulationRuntime; robot: RobotDefinition } | null = null;
 

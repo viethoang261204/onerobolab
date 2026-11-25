@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest';
 import { LevelRegistry } from '../../content/levels/registry';
-import { buildProgram } from '../programming/test-utils';
+import { buildProgram } from '@robolab/blocks/test-utils';
 import { layouts, playLevel } from './play';
 import { SOLUTIONS } from './reference-solutions';
 

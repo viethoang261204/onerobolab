@@ -1,5 +1,5 @@
 import { entityId, Vec2Math, type Area2D, type MapEntity, type Pose2D, type Vec2 } from '@robolab/shared';
-import type { BlockType } from '../../../features/programming/blocks/block-types';
+import type { BlockType } from '@robolab/blocks';
 
 /*
  * Shared authoring bits for Starter Island levels: the toolbox grows one

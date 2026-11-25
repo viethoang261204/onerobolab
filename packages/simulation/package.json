@@ -2,7 +2,7 @@
   "name": "@robolab/simulation",
   "version": "0.0.0",
   "private": true,
-  "description": "Fixed-timestep simulation controller that orchestrates all engines.",
+  "description": "Fixed-timestep simulation runtime that orchestrates all engines, headless runs and the stored-level codec. Shared by the web simulator and the API judge.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
@@ -16,6 +16,9 @@
     "@robolab/physics-engine": "workspace:*",
     "@robolab/sensor-engine": "workspace:*",
     "@robolab/mission-engine": "workspace:*",
-    "@robolab/scoring-engine": "workspace:*"
+    "@robolab/world-engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@robolab/blocks": "workspace:*"
   }
 }

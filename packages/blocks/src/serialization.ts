@@ -1,6 +1,6 @@
-import { isBlockType } from './block-registry';
-import type { ProgramState } from './block-types';
-import { checkStructure } from './block-validation';
+import { isBlockType } from './block-registry.ts';
+import type { ProgramState } from './block-types.ts';
+import { checkStructure } from './block-validation.ts';
 
 const FORMAT = 'roboverse.blocks';
 

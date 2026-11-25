@@ -1,6 +1,6 @@
-import { START_ID } from './block-model';
-import type { BlockInstance, ProgramState } from './block-types';
-import { createBlock } from './block-utils';
+import { START_ID } from './block-model.ts';
+import type { BlockInstance, ProgramState } from './block-types.ts';
+import { createBlock } from './block-utils.ts';
 
 const withFields = (b: BlockInstance, fields: Record<string, number>): BlockInstance => ({ ...b, fields: { ...b.fields, ...fields } });
 

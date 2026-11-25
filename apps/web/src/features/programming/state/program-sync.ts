@@ -3,8 +3,8 @@ import { isNetworkError, type ApiError } from '../../api/client';
 import { onReconnect, useConnectionStore } from '../../api/connection-store';
 import { studentApi } from '../../account/student-api';
 import { browserStorage, readJson, type KeyValueStorage } from '../../persistence/storage';
-import type { ProgramState } from '../blocks/block-types';
-import { parseProgram, serializeProgram } from '../blocks/serialization';
+import type { ProgramState } from '@robolab/blocks';
+import { parseProgram, serializeProgram } from '@robolab/blocks';
 import { generatePython } from '../generators/python-generator';
 import { localProgram, localProgramLevels, setProgramNamespace, useProgramStore } from './program-store';
 

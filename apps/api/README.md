@@ -7,8 +7,8 @@ Fastify 5 · zod · node-postgres · Argon2id · PostgreSQL (Neon) · deployed o
 pnpm --filter @robolab/api dev      # http://localhost:3000 (needs apps/api/.env)
 pnpm dev:api:memory                 # same API on an in-memory, freshly seeded database (no Neon needed);
                                     # prints random admin/student passwords (or set DEV_ADMIN_PASSWORD / DEV_STUDENT_PASSWORD)
-pnpm --filter @robolab/api build    # → apps/api/dist
-pnpm --filter @robolab/api start    # node dist/server.js
+pnpm --filter @robolab/api build    # typecheck only (tsc --noEmit); nothing is emitted
+pnpm --filter @robolab/api start    # node src/server.ts (Node >= 22.18 strips types; no dist)
 pnpm test                           # includes the API tests (real PostgreSQL via PGlite)
 ```
 
@@ -34,7 +34,7 @@ src/
   http/                  errors (envelope), audit log, SQL helpers (parameterised only)
   routes/                health · auth · student · admin-students · admin-curriculum · admin-content
   cli/set-password.ts    set a user's password from stdin (first admin password)
-  dev/                   in-memory PGlite database + dev server (never built into dist)
+  dev/                   in-memory PGlite database + dev server (dev only, never used in production)
   test/harness.ts        PGlite database with schema.sql + seed.sql for tests
 ```
 
@@ -93,8 +93,8 @@ Errors always look like `{"error": {"code": "LEVEL_LOCKED", "message": "…", "d
 | POST | `/api/levels/:levelId/attempts` | `{status, result}` — logged, numbered, never rewarded |
 | POST | `/api/levels/:levelId/submissions` | `{result}` — server scores; completion, stars, XP, achievements, unlocks |
 | GET | `/api/catalog` | the whole journey in one request: student, totals, worlds (journey order), levels with state, lock reason + unlock rules (locked), progress, map/scene preview, and content (objectives, hints — paid ones hidden — allowed blocks, intro, mission settings) only for playable levels |
-| POST | `/api/levels/:levelId/runs` | Run pressed: needs a saved program; closes an unfinished run of the level (ABORTED); creates a RUNNING attempt with a program snapshot; counts the attempt |
-| POST | `/api/runs/:runId/finish` | `{outcome: COMPLETED\|FAILED\|ERROR\|STOPPED, result}` — own RUNNING runs only (else 404 / 409); simulated time may not exceed wall-clock time since the start (+5 s); only COMPLETED runs can pass; returns stars, XP, objectives (with titles), achievements, unlocked levels, totals |
+| POST | `/api/levels/:levelId/runs` | Run pressed: needs a saved program; closes an unfinished run of the level (ABORTED); creates a RUNNING attempt with a program snapshot; body `{layout, seed}` (layout index and seed the browser used; stored in `level_attempts.layout_index` / `seed`); counts the attempt |
+| POST | `/api/runs/:runId/finish` | `{outcome: COMPLETED\|FAILED\|ERROR\|STOPPED, result}` — own RUNNING runs only (else 404 / 409); the server replays the program (see "The run judge") and scores what it observed; only COMPLETED runs can pass; returns stars, XP, objectives (with titles), achievements, unlocked levels, totals |
 | GET | `/api/me/progress` · `/api/me/achievements` · `/api/lessons` | |
 | GET/PUT | `/api/me/settings` | |
 
@@ -171,9 +171,17 @@ Saving, running and submitting a LOCKED/DISABLED level → 403 `LEVEL_LOCKED` wi
   block a pass.
 - XP is paid through the `xp_transactions` ledger; a unique index makes level-completion XP payable
   once. Stars are recorded only when the best improves.
-- Limit: the run itself happens in the browser. A determined student can still report a plausible
-  fake run. Closing that gap means replaying the program server-side, since the engines are
-  deterministic and headless. See ROADMAP.
+- The run itself happens in the browser, but the server no longer trusts its report (next section).
+
+## The run judge
+
+`src/domain/judge.ts` runs on `POST /api/runs/:id/finish` (and the older attempts / submissions
+routes). It re-compiles the stored program version (`@robolab/blocks`) and replays it headless
+(`runHeadless` from `@robolab/simulation`) on the stored level, layout and seed; stars, score and
+XP come from what the judge observed. The browser's report is kept as `result.reported`, the
+judge's as `result.judged`, and `result.judge` holds layout, seed, outcome, ticks and the list of
+mismatches. Budget: 600 simulated seconds per judged run, also bounded by wall-clock time since the
+run started + 5 s. Existing databases need `database/migrations/0009_run_judge.sql`.
 
 ## Security summary
 
@@ -189,16 +197,15 @@ Render's proxy, generic 500s.
    (see `database/README.md`). An existing Phase 1 database needs
    `database/migrations/0002_auth_sessions.sql` instead of re-running the schema.
 2. **Blueprint:** Render dashboard → *New* → *Blueprint* → select this repository. `render.yaml`
-   creates `onerobolab-api`: build `pnpm install … && pnpm --filter @robolab/api build`,
-   start `node apps/api/dist/server.js`, health check `/health`, Node 22.18.
+   creates `onerobolab-api`: build `pnpm install … && pnpm --filter @robolab/api typecheck`,
+   start `node --max-old-space-size=256 apps/api/src/server.ts` (the API imports the `packages/**` sources, which `tsc` cannot emit outside `apps/api/src`, so production runs TypeScript directly with Node 22.18+ type stripping; `buildFilter` includes `packages/**`), health check `/health`, Node 22.18.
 3. **Environment:** set `DATABASE_URL` (Neon *pooled* string, `sslmode=require`) and
    `CORS_ORIGIN` (the web app's origin) in the dashboard. `AUTH_SECRET` is generated by Render.
    Never commit these values.
 4. **First admin password.** The seed has no passwords. From your machine, with the same
    `DATABASE_URL` in the environment:
    ```bash
-   pnpm --filter @robolab/api build
-   DATABASE_URL='…' node apps/api/dist/cli/set-password.js admin
+   DATABASE_URL='…' node apps/api/src/cli/set-password.ts admin
    # type the password and press Enter (read from stdin, not from the command line)
    ```
    Or use the Render Shell. Remove or re-password the sample students before real use.

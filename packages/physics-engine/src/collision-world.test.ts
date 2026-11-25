@@ -1,6 +1,6 @@
 import { entityId, mapId, Vec2Math, type MapDefinition, type MapEntity, type MapEntityOf, type MapEntityType, type MapQuery } from '@robolab/shared';
 import { describe, expect, it } from 'vitest';
-import { CollisionWorld } from './collision-world';
+import { CollisionWorld } from './collision-world.ts';
 
 const HALF = { x: 0.157, z: 0.152 };
 

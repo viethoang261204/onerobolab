@@ -1,8 +1,8 @@
-import type { MapDefinition } from '../types/map';
-import type { MissionDefinition, MissionState } from '../types/mission';
-import type { Program } from '../types/program';
-import type { RobotDefinition } from '../types/robot';
-import type { SimulationConfig, SimulationEvent, SimulationSnapshot } from '../types/simulation';
+import type { MapDefinition } from '../types/map.ts';
+import type { MissionDefinition, MissionState } from '../types/mission.ts';
+import type { Program } from '../types/program.ts';
+import type { RobotDefinition } from '../types/robot.ts';
+import type { SimulationConfig, SimulationEvent, SimulationSnapshot } from '../types/simulation.ts';
 
 export interface SimulationSetup {
   readonly map: MapDefinition;

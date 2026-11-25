@@ -1,9 +1,12 @@
 import type { PGlite } from '@electric-sql/pglite';
+import { serializeProgram } from '@robolab/blocks';
+import { buildProgram, fwd, left, right, stop, type Spec } from '@robolab/blocks/test-utils';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.ts';
 import { loadConfig } from '../config.ts';
 import type { Db } from '../db/db.ts';
 import { createMemoryDb, setSeedPasswords } from '../dev/memory-db.ts';
+import type { Program } from '../domain/program.ts';
 
 /*
  * Test harness: a real PostgreSQL (PGlite, in-process WASM) loaded with
@@ -81,4 +84,17 @@ export function straightProgram(distanceCm: number, extra: Record<string, unknow
     blocks[`x${i}`] = { id: `x${i}`, fields: {}, inputs: {}, slots: {}, next: i + 1 < extra.length ? `x${i + 1}` : null, ...b };
   });
   return { format: 'roboverse.blocks', version: 1, blocks, roots: [{ id: 'start', x: 40, y: 28 }], variables: [] };
+}
+
+/** Solving block stacks for the seeded levels (matching `database/seed.sql` maps and allowed blocks). */
+const SEEDED_SOLUTIONS: Readonly<Record<string, readonly Spec[]>> = {
+  'starter-01': [fwd(160), left(90), fwd(120), stop()],
+  'starter-02': [fwd(120), left(90), fwd(120), right(90), fwd(160), right(90), fwd(80), stop()],
+};
+
+/** A real solving block program (stored JSON format) for a seeded level slug. */
+export function solutionProgram(slug: string): Program {
+  const stack = SEEDED_SOLUTIONS[slug];
+  if (!stack) throw new Error(`No seeded test solution defined for level "${slug}".`);
+  return JSON.parse(serializeProgram(buildProgram(stack, []))) as Program;
 }

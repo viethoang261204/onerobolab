@@ -6,7 +6,7 @@ import { createPgDb } from '../db/db.ts';
  * Sets a user's password (Argon2id) directly in the database — used once
  * after seeding to give the `admin` account a real password.
  *
- *   DATABASE_URL=… node apps/api/dist/cli/set-password.js admin
+ *   DATABASE_URL=… node apps/api/src/cli/set-password.ts admin
  *   (type the password, then Enter — it is read from stdin, not argv, so it
  *    doesn't end up in shell history or process lists)
  *
@@ -18,7 +18,7 @@ async function main() {
   const temporary = args.includes('--temporary');
   const url = process.env.DATABASE_URL;
   if (!username || !url) {
-    console.error('Usage: DATABASE_URL=… node dist/cli/set-password.js <username> [--temporary]  (password on stdin)');
+    console.error('Usage: DATABASE_URL=… node src/cli/set-password.ts <username> [--temporary]  (password on stdin)');
     process.exit(2);
   }
   const password = await readLine(process.stdin.isTTY ? `New password for ${username}: ` : '');

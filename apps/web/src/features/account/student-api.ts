@@ -178,8 +178,8 @@ export const studentApi = {
   getProgram: (levelSlug: string) => studentHttp.get<{ program: ApiProgram | null }>(`/api/levels/${enc(levelSlug)}/program`),
   saveProgram: (levelSlug: string, body: { blockProgram: unknown; pythonCode: string | null; createVersion?: boolean }) =>
     studentHttp.put<{ program: ApiProgram }>(`/api/levels/${enc(levelSlug)}/program`, body),
-  startRun: (levelSlug: string) =>
-    studentHttp.post<{ run: { id: string; attemptNumber: number; startedAt: string; blockCount: number } }>(`/api/levels/${enc(levelSlug)}/runs`, {}),
+  startRun: (levelSlug: string, setup: { layout: number; seed: number }) =>
+    studentHttp.post<{ run: { id: string; attemptNumber: number; startedAt: string; blockCount: number } }>(`/api/levels/${enc(levelSlug)}/runs`, setup),
   finishRun: (runId: string, outcome: RunOutcome, result: RunReport) => studentHttp.post<RunFinish>(`/api/runs/${enc(runId)}/finish`, { outcome, result }),
   revealHint: (levelSlug: string, hintId: string) =>
     studentHttp.post<{ hint: { id: string; title: string; content: string; cost: number } }>(`/api/levels/${enc(levelSlug)}/hints/${enc(hintId)}/reveal`, {}),

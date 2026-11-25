@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { bearer, createTestContext, straightProgram, type TestContext } from '../test/harness.ts';
+import { bearer, createTestContext, solutionProgram, straightProgram, type TestContext } from '../test/harness.ts';
 
 let t: TestContext;
 let tokenC: string; // leminhc03 — fresh student
@@ -95,29 +95,44 @@ describe('runs, scoring and rewards', () => {
     expect(res.statusCode).toBe(400);
   });
 
-  test('impossible results are rejected', async () => {
-    const fast = await send('POST', '/api/levels/starter-01/submissions', { result: { ...CLEAN_RUN, timeSeconds: 0.2 } });
-    expect(fast.statusCode).toBe(422);
-    expect(fast.json().error.code).toBe('IMPLAUSIBLE_RESULT');
-    const unknown = await send('POST', '/api/levels/starter-01/submissions', { result: { ...CLEAN_RUN, objectivesCompleted: ['goal', 'secret-bonus'] } });
-    expect(unknown.statusCode).toBe(422);
-  });
-
   test('a failed attempt is recorded and numbered, but awards nothing', async () => {
+    // The saved program (`straightProgram(170)`) does not solve starter-01, so claiming PASSED is overridden.
     const res = await send('POST', '/api/levels/starter-01/attempts', { status: 'PASSED', result: { ...CLEAN_RUN, collisions: 2 } });
     expect(res.statusCode).toBe(201);
-    // Server overrides the claimed PASSED.
     expect(res.json().attempt).toMatchObject({ status: 'FAILED', attemptNumber: 1, stars: 0 });
     const second = await send('POST', '/api/levels/starter-01/attempts', { status: 'ABORTED', result: { objectivesCompleted: [], timeSeconds: 1, collisions: 0 } });
-    expect(second.json().attempt.attemptNumber).toBe(2);
+    expect(second.json().attempt).toMatchObject({ status: 'ABORTED', attemptNumber: 2, stars: 0 });
+  });
+
+  test('anti-cheat: a non-solving program with a faked report does not pass and records mismatch', async () => {
+    // Saved program is still `straightProgram(170)` (does not reach goal), but client fakes every objective and a plausible time.
+    const res = await send('POST', '/api/levels/starter-01/submissions', {
+      result: { objectivesCompleted: ['cp-1', 'goal', 'safe'], timeSeconds: 8, collisions: 0 },
+    });
+    expect(res.statusCode).toBe(201);
+    const body = res.json();
+    expect(body.submission).toMatchObject({ status: 'FAILED', stars: 0, xpEarned: 0 });
+    expect(body.stats).toMatchObject({ totalXp: 0, totalStars: 0, levelsCompleted: 0 });
+    expect((await get('/api/levels/starter-02')).json().level.state).toBe('LOCKED');
+
+    const { rows } = await t.db.query<{
+      result: { reported: { objectivesCompleted: string[] }; judged: { objectivesCompleted: string[] }; judge: { mismatch: string[] } };
+    }>('SELECT result FROM level_attempts WHERE submission_id = $1', [body.submission.id]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.result.judge.mismatch.length).toBeGreaterThan(0);
+    expect(rows[0]!.result.reported.objectivesCompleted).toEqual(['cp-1', 'goal', 'safe']);
+    expect(rows[0]!.result.judged.objectivesCompleted).not.toContain('goal');
   });
 
   test('a clean submission completes the level: stars, XP once, unlocks the next level', async () => {
+    const saved = await send('PUT', '/api/levels/starter-01/program', { blockProgram: solutionProgram('starter-01'), createVersion: true });
+    expect(saved.statusCode).toBe(200);
+
     const res = await send('POST', '/api/levels/starter-01/submissions', { result: CLEAN_RUN });
     expect(res.statusCode).toBe(201);
     const body = res.json();
-    // 500 complete + 100 checkpoint + 200 time bonus + 200 efficiency bonus (mission_settings.scoring).
-    expect(body.submission).toMatchObject({ status: 'PASSED', stars: 3, score: 1000, xpEarned: 50, blockCount: 1 });
+    // 500 complete + 100 checkpoint + 200 time bonus + 200 efficiency bonus (mission_settings.scoring); 4 blocks = parBlocks.
+    expect(body.submission).toMatchObject({ status: 'PASSED', stars: 3, score: 1000, xpEarned: 50, blockCount: 4 });
     expect(body.achievementsUnlocked).toContain('first-steps');
     expect(body.unlockedLevels).toContain(await t.levelId('starter-02'));
     expect(body.stats).toMatchObject({ totalStars: 3, levelsCompleted: 1, totalXp: 50 + 20 });
@@ -132,6 +147,25 @@ describe('runs, scoring and rewards', () => {
     expect(progress.stats).toMatchObject({ totalXp: 70, totalStars: 3, levelsCompleted: 1, currentStreak: 1 });
     const ach = (await get('/api/me/achievements')).json().achievements;
     expect(ach.find((a: { slug: string }) => a.slug === 'first-steps').unlockedAt).not.toBeNull();
+  });
+
+  test('anti-cheat: a solving program still passes when the client under-reports objectives, and records mismatch', async () => {
+    // `solutionProgram('starter-01')` is saved; client omits `goal` and `safe`.
+    const res = await send('POST', '/api/levels/starter-01/submissions', {
+      result: { objectivesCompleted: ['cp-1'], timeSeconds: 8, collisions: 0 },
+    });
+    expect(res.statusCode).toBe(201);
+    const body = res.json();
+    expect(body.submission).toMatchObject({ status: 'PASSED', stars: 3, xpEarned: 0, blockCount: 4 });
+
+    const { rows } = await t.db.query<{
+      result: { reported: { objectivesCompleted: string[] }; judged: { objectivesCompleted: string[] }; judge: { mismatch: string[] } };
+    }>('SELECT result FROM level_attempts WHERE submission_id = $1', [body.submission.id]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.result.judge.mismatch.length).toBeGreaterThan(0);
+    expect(rows[0]!.result.judge.mismatch.some((m) => m.includes('did not report'))).toBe(true);
+    expect(rows[0]!.result.reported.objectivesCompleted).toEqual(['cp-1']);
+    expect(rows[0]!.result.judged.objectivesCompleted).toEqual(expect.arrayContaining(['cp-1', 'goal', 'safe']));
   });
 
   test('a paid hint can be bought once XP is available', async () => {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { EMPTY_SENSORS, type RuntimeSnapshot } from './RuntimeState';
+import { EMPTY_SENSORS, type RuntimeSnapshot } from '@robolab/simulation';
 
 interface RuntimeStore extends RuntimeSnapshot {
   /** Blocks compiled for the current run (star scoring). */

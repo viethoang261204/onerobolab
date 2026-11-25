@@ -1,8 +1,8 @@
 import { ROVER } from '@robolab/robot-engine';
 import type { Program, Statement } from '@robolab/shared';
 import { describe, expect, it } from 'vitest';
-import { checkStructure, validateProgram } from '../blocks/block-validation';
-import { compileProgram } from '../compiler/compiler';
+import { checkStructure, validateProgram } from '@robolab/blocks';
+import { compileProgram } from '@robolab/blocks';
 import { generatePython, generatePythonWithLines } from '../generators/python-generator';
 import {
   and,
@@ -38,7 +38,7 @@ import {
   waitS,
   whileDo,
   type Spec,
-} from '../test-utils';
+} from '@robolab/blocks/test-utils';
 import { pythonToBlocks } from './python-to-blocks';
 
 /** IR without block ids (blocks are rebuilt, so ids differ). */

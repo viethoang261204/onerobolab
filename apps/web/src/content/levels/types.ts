@@ -1,5 +1,6 @@
+import type { LevelLayout } from '@robolab/simulation';
 import type { Area2D, MapDefinition, MapEntity, MissionDefinition, Pose2D, Vec2 } from '@robolab/shared';
-import type { BlockType } from '../../features/programming/blocks/block-types';
+import type { BlockType } from '@robolab/blocks';
 import type { CameraView } from '../../types/ui';
 
 /** What earns stars beyond completing the level. */
@@ -102,15 +103,8 @@ export interface LevelDefinition {
 export type EditorMode = 'blocks' | 'split' | 'python';
 
 /** One layout of a level with variants: entities added / removed, start / goal moved, data changed. */
-export interface LevelVariant {
-  readonly id: string;
-  readonly add?: readonly MapEntity[];
-  /** Ids of base map entities this layout leaves out. */
-  readonly remove?: readonly string[];
-  readonly start?: Pose2D;
-  readonly finish?: Area2D;
-  readonly data?: Readonly<Record<string, number>>;
-}
+/** One layout of a level (entities added / removed, start and goal moved, data overridden). */
+export type LevelVariant = LevelLayout;
 
 /** Difficulty tiers of the curriculum (Easy → Boss). */
 export type MissionTier = 'easy' | 'medium' | 'hard' | 'boss';

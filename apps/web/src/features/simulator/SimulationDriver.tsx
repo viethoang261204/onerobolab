@@ -11,8 +11,8 @@ import { effectsBus } from './effects/effects-bus';
 import { collisionHint, collisionMessage, describeCommand, describeResult, failureMessage, ruleFailure } from './runtime/describe';
 import { runController } from './runtime/run-controller';
 import { useRuntimeStore } from './runtime/runtime-store';
-import type { RuntimeEvent } from './runtime/RuntimeEvents';
-import { SimulationRuntime } from './runtime/SimulationRuntime';
+import type { RuntimeEvent } from '@robolab/simulation';
+import { SimulationRuntime } from '@robolab/simulation';
 import { publishWorld } from './runtime/world-view';
 
 /** UI snapshot rate while running (Hz). */

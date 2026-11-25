@@ -1,8 +1,8 @@
 import { memo, useMemo } from 'react';
 import { cn } from '../../../utils/cn';
-import { getBlockDef } from '../blocks/block-registry';
-import type { BlockType } from '../blocks/block-types';
-import { createBlock, fragmentFromBlock } from '../blocks/block-utils';
+import { getBlockDef } from '@robolab/blocks';
+import type { BlockType } from '@robolab/blocks';
+import { createBlock, fragmentFromBlock } from '@robolab/blocks';
 import { startBlockDrag } from '../editor/drag-controller';
 import { StaticBlock } from '../editor/StaticBlock';
 

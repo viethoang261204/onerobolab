@@ -1,5 +1,5 @@
+import { layoutsFromJson, numbersFromJson } from '@robolab/simulation';
 import type { ScoringRules } from '@robolab/shared';
-import type { MapEntity } from '@robolab/shared';
 import { MISSION_MECHANICS, type EditorMode, type LevelDefinition, type LevelVariant, type MissionBriefing, type MissionMechanic, type MissionTier } from '../../content/levels/types';
 
 /*
@@ -49,21 +49,6 @@ const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFin
 const str = (v: unknown): v is string => typeof v === 'string';
 const strings = (v: unknown): string[] | null => (Array.isArray(v) && v.every(str) ? v : null);
 
-/** Scoring rules from settings, or null when absent / malformed. */
-export function scoringFrom(raw: unknown): ScoringRules | null {
-  if (!isObj(raw) || !isNum(raw.completionPoints) || !isNum(raw.checkpointPoints) || !isNum(raw.collisionPenalty)) return null;
-  const bonus = <K extends string>(v: unknown, key: K): ({ [P in K]: number } & { maxPoints: number }) | null =>
-    isObj(v) && isNum(v[key]) && isNum(v.maxPoints) ? ({ [key]: v[key], maxPoints: v.maxPoints } as { [P in K]: number } & { maxPoints: number }) : null;
-  return {
-    completionPoints: raw.completionPoints,
-    checkpointPoints: raw.checkpointPoints,
-    collisionPenalty: raw.collisionPenalty,
-    timeBonus: bonus(raw.timeBonus, 'parSeconds'),
-    efficiencyBonus: bonus(raw.efficiencyBonus, 'parBlocks'),
-    ...(isNum(raw.bonusPoints) && { bonusPoints: raw.bonusPoints }),
-  };
-}
-
 const TIERS: readonly MissionTier[] = ['easy', 'medium', 'hard', 'boss'];
 const MECHANICS: readonly MissionMechanic[] = MISSION_MECHANICS;
 
@@ -94,41 +79,10 @@ export function briefingFrom(raw: unknown): MissionBriefing | null {
 
 const EDITORS: readonly EditorMode[] = ['blocks', 'split', 'python'];
 
-/** Numbers only (`mission.target` …), or null. */
-function numbers(v: unknown): Record<string, number> | null {
-  if (!isObj(v)) return null;
-  const out: Record<string, number> = {};
-  for (const [k, n] of Object.entries(v)) if (/^[A-Za-z_][A-Za-z0-9_]{0,31}$/.test(k) && isNum(n)) out[k] = n;
-  return out;
-}
-
-const isEntity = (v: unknown): v is MapEntity => isObj(v) && str(v.id) && str(v.type);
-
-/** Layouts from settings: well-formed ones only (the map engine validates them when one is played). */
-function variantsFrom(v: unknown): LevelVariant[] | null {
-  if (!Array.isArray(v)) return null;
-  const out: LevelVariant[] = [];
-  for (const raw of v) {
-    if (!isObj(raw) || !str(raw.id)) continue;
-    const add = Array.isArray(raw.add) ? raw.add.filter(isEntity) : null;
-    const remove = strings(raw.remove);
-    const data = numbers(raw.data);
-    out.push({
-      id: raw.id,
-      ...(add && { add }),
-      ...(remove && { remove }),
-      ...(isObj(raw.start) && isNum(raw.start.x) && isNum(raw.start.z) && isNum(raw.start.heading) && { start: { x: raw.start.x, z: raw.start.z, heading: raw.start.heading } }),
-      ...(isObj(raw.finish) && isObj(raw.finish.center) && { finish: raw.finish as unknown as NonNullable<LevelVariant['finish']> }),
-      ...(data && { data }),
-    });
-  }
-  return out.length ? out : null;
-}
-
 /** The level extras stored in settings (mission data, layouts, editor stage, fog). */
 export function levelExtrasFrom(settings: Record<string, unknown>): Partial<Pick<LevelDefinition, 'data' | 'variants' | 'editor' | 'fog'>> {
-  const data = numbers(settings.data);
-  const variants = variantsFrom(settings.variants);
+  const data = numbersFromJson(settings.data);
+  const variants = layoutsFromJson(settings.variants);
   return {
     ...(data && Object.keys(data).length > 0 && { data }),
     ...(variants && { variants }),

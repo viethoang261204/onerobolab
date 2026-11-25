@@ -15,7 +15,7 @@ import {
   type WorldSnapshot,
 } from '@robolab/shared';
 import { describe, expect, it } from 'vitest';
-import { MissionTracker } from './mission-tracker';
+import { MissionTracker } from './mission-tracker.ts';
 
 function stubMap(entities: MapEntity[]): MapQuery {
   const definition: MapDefinition = {

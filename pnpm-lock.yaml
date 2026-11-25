@@ -32,6 +32,18 @@ importers:
       '@node-rs/argon2':
         specifier: ^2.2.1
         version: 2.2.1
+      '@robolab/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
+      '@robolab/robot-engine':
+        specifier: workspace:*
+        version: link:../../packages/robot-engine
+      '@robolab/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@robolab/simulation':
+        specifier: workspace:*
+        version: link:../../packages/simulation
       fastify:
         specifier: ^5.12.5
         version: 5.12.5
@@ -57,6 +69,9 @@ importers:
       '@react-three/fiber':
         specifier: ^9.8.1
         version: 9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)
+      '@robolab/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
       '@robolab/map-engine':
         specifier: workspace:*
         version: link:../../packages/map-engine
@@ -78,6 +93,9 @@ importers:
       '@robolab/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@robolab/simulation':
+        specifier: workspace:*
+        version: link:../../packages/simulation
       '@robolab/world-engine':
         specifier: workspace:*
         version: link:../../packages/world-engine
@@ -127,6 +145,16 @@ importers:
       '@robolab/shared':
         specifier: workspace:*
         version: link:../shared
+
+  packages/blocks:
+    dependencies:
+      '@robolab/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@robolab/robot-engine':
+        specifier: workspace:*
+        version: link:../robot-engine
 
   packages/map-engine:
     dependencies:
@@ -180,15 +208,19 @@ importers:
       '@robolab/robot-engine':
         specifier: workspace:*
         version: link:../robot-engine
-      '@robolab/scoring-engine':
-        specifier: workspace:*
-        version: link:../scoring-engine
       '@robolab/sensor-engine':
         specifier: workspace:*
         version: link:../sensor-engine
       '@robolab/shared':
         specifier: workspace:*
         version: link:../shared
+      '@robolab/world-engine':
+        specifier: workspace:*
+        version: link:../world-engine
+    devDependencies:
+      '@robolab/blocks':
+        specifier: workspace:*
+        version: link:../blocks
 
   packages/world-engine:
     dependencies:

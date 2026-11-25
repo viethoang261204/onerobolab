@@ -1,7 +1,7 @@
-import { getBlockDef } from './block-registry';
-import { START_ID } from './block-model';
-import type { BlockId, ProgramState } from './block-types';
-import { buildParentIndex, chainIds } from './block-utils';
+import { getBlockDef } from './block-registry.ts';
+import { START_ID } from './block-model.ts';
+import type { BlockId, ProgramState } from './block-types.ts';
+import { buildParentIndex, chainIds } from './block-utils.ts';
 
 export type IssueSeverity = 'error' | 'warning' | 'info';
 

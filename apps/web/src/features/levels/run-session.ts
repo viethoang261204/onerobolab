@@ -1,7 +1,12 @@
+import { DEFAULT_RUN_SEED } from '@robolab/simulation';
 import { isNetworkError } from '../api/client';
 import { onReconnect } from '../api/connection-store';
 import { studentApi, type RunFinish, type RunOutcome, type RunReport } from '../account/student-api';
 import { flushProgram } from '../programming/state/program-sync';
+import { variantIndexFor } from './variant-store';
+
+/** Seed the simulator plays recorded runs with (the runtime default); the server replays the run with it. */
+export const RUN_SEED = DEFAULT_RUN_SEED;
 
 /*
  * One simulator run as the server sees it (Student Phase 4):
@@ -41,7 +46,7 @@ export function beginRun(levelId: string): void {
         startError = 'Your program is saved on this device only, so this run can’t be recorded.';
         return null;
       }
-      return (await studentApi.startRun(levelId)).run.id;
+      return (await studentApi.startRun(levelId, { layout: variantIndexFor(levelId), seed: RUN_SEED })).run.id;
     } catch (e) {
       startError = isNetworkError(e) ? 'Connection lost — this run can’t be recorded. Your program is saved locally.' : ((e as Error).message ?? 'This run could not be recorded.');
       return null;

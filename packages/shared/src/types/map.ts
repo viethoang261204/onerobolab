@@ -1,6 +1,6 @@
-import type { Area2D, Pose2D, Vec2, Vec3 } from './geometry';
-import type { EntityId, MapId } from './ids';
-import type { SensorColor } from './sensor';
+import type { Area2D, Pose2D, Vec2, Vec3 } from './geometry.ts';
+import type { EntityId, MapId } from './ids.ts';
+import type { SensorColor } from './sensor.ts';
 
 interface EntityBase {
   readonly id: EntityId;

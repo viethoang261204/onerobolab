@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useState, type PointerEvent } from 'react';
-import type { DropdownOption, FieldValue } from '../blocks/block-types';
+import type { DropdownOption, FieldValue } from '@robolab/blocks';
 
 /** Field widgets must not start block drags. */
 const stop = (e: PointerEvent) => e.stopPropagation();

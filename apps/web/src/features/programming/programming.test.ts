@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import * as M from './blocks/block-model';
-import { searchBlocks } from './blocks/block-registry';
-import type { BlockId, ProgramState } from './blocks/block-types';
-import { chainIds, cloneFragment, createBlock, extractFragment, fragmentFromBlock, subtreeIds } from './blocks/block-utils';
-import { checkStructure, validateProgram } from './blocks/block-validation';
-import { createSampleProgram } from './blocks/sample-program';
-import { parseProgram, serializeProgram } from './blocks/serialization';
+import * as M from '@robolab/blocks';
+import { searchBlocks } from '@robolab/blocks';
+import type { BlockId, ProgramState } from '@robolab/blocks';
+import { chainIds, cloneFragment, createBlock, extractFragment, fragmentFromBlock, subtreeIds } from '@robolab/blocks';
+import { checkStructure, validateProgram } from '@robolab/blocks';
+import { createSampleProgram } from '@robolab/blocks';
+import { parseProgram, serializeProgram } from '@robolab/blocks';
 import { generatePython } from './generators/python-generator';
 import { useProgramStore } from './state/program-store';
 

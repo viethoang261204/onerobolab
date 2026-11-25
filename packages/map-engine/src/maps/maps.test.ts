@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createMapEngine, validateMap } from '../map-engine';
-import { PathBuilder } from './path-builder';
-import { RESCUE_SUPPLIES } from './rescue-supplies';
+import { createMapEngine, validateMap } from '../map-engine.ts';
+import { PathBuilder } from './path-builder.ts';
+import { RESCUE_SUPPLIES } from './rescue-supplies.ts';
 
 const close = (a: number, b: number) => expect(a).toBeCloseTo(b, 9);
 

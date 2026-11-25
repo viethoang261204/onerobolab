@@ -1,5 +1,5 @@
-import { START_ID } from '../blocks/block-model';
-import type { ProgramState } from '../blocks/block-types';
+import { START_ID } from '@robolab/blocks';
+import type { ProgramState } from '@robolab/blocks';
 
 export type ProgramReadiness =
   | { readonly ok: true; readonly blocks: number }

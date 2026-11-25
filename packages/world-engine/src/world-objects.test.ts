@@ -1,6 +1,6 @@
 import { entityId, mapId, Vec2Math, type MapDefinition, type MapEntity, type MapEntityOf, type MapEntityType, type MapQuery } from '@robolab/shared';
 import { describe, expect, it } from 'vitest';
-import { WorldObjects } from './world-objects';
+import { WorldObjects } from './world-objects.ts';
 
 function stubMap(entities: MapEntity[]): MapQuery {
   const definition: MapDefinition = {

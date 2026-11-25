@@ -1,8 +1,8 @@
 import { AlertTriangle, CheckCircle2, ExternalLink, Save, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { navigate } from '../../../router/router-store';
-import { CATEGORIES, blockLabel } from '../../../programming/blocks/block-registry';
-import type { BlockType } from '../../../programming/blocks/block-types';
+import { CATEGORIES, blockLabel } from '@robolab/blocks';
+import type { BlockType } from '@robolab/blocks';
 import { adminPaths, type LevelTab } from '../../admin-routes';
 import { ApiError } from '../../api/client';
 import { contentApi } from '../../api/endpoints';

@@ -1,26 +1,12 @@
-import type { Pose2D, SensorSnapshot, WheelSpeeds } from '@robolab/shared';
+import type { RobotActivity, RobotBodyState } from '@robolab/simulation';
 import type { RefObject } from 'react';
 import type { Group, Mesh, MeshStandardMaterial } from 'three';
 
-/**
- * Visual status of the robot (display, LEDs, head behaviour). Broader than the
- * engine's `RobotStatus` because it includes mission outcomes.
- */
-export type RobotVisualStatus = 'idle' | 'running' | 'stopped' | 'success' | 'error';
+/** Visual status of the robot (display, LEDs, head behaviour) — the body's activity. */
+export type RobotVisualStatus = RobotActivity;
 
 /** Everything the renderer needs each frame. Read via refs in `useFrame`, never via React state. */
-export interface RobotVisualState {
-  readonly pose: Pose2D;
-  /** Commanded wheel surface speeds (m/s). */
-  readonly motors: WheelSpeeds;
-  /** Accumulated wheel rotation (rad) per side; positive = rolling forward. */
-  readonly wheelAngle: { readonly left: number; readonly right: number };
-  /** Body velocity (m/s, rad/s). */
-  readonly linear: number;
-  readonly angular: number;
-  readonly status: RobotVisualStatus;
-  readonly sensors: SensorSnapshot;
-}
+export type RobotVisualState = RobotBodyState;
 
 /** Pull interface between whatever drives the robot (demo autopilot, later the engine) and the renderer. */
 export interface RobotVisualSource {

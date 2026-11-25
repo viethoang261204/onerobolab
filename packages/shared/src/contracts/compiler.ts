@@ -1,4 +1,4 @@
-import type { Program } from '../types/program';
+import type { Program } from '../types/program.ts';
 
 export interface CompileDiagnostic {
   readonly severity: 'error' | 'warning';

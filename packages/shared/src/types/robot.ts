@@ -1,6 +1,6 @@
-import type { Pose2D, Vec3 } from './geometry';
-import type { RobotId } from './ids';
-import type { SensorMount } from './sensor';
+import type { Pose2D, Vec3 } from './geometry.ts';
+import type { RobotId } from './ids.ts';
+import type { SensorMount } from './sensor.ts';
 
 /** Static description of a differential-drive robot model. */
 export interface RobotDefinition {

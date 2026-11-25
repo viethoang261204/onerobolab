@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { BlockFragment, BlockId, BlockShape, DropTarget } from '../blocks/block-types';
+import type { BlockFragment, BlockId, BlockShape, DropTarget } from '@robolab/blocks';
 
 export interface DragSession {
   /** What is being dragged (rendered by the preview). */

@@ -33,10 +33,10 @@ robo3d/
 │  ├─ robot-engine/            robot state, IR interpreter, differential-drive controller, robot catalogue
 │  ├─ physics-engine/          Rapier world behind the PhysicsEngine contract
 │  ├─ sensor-engine/           distance / line / color / touch sampling
-│  ├─ blockly-engine/          block definitions, toolbox, Blockly JSON → IR compiler
+│  ├─ blocks/                  block data model + block → IR compiler (depends on shared only)
 │  ├─ mission-engine/          objectives, collisions, timer, success/failure
 │  ├─ scoring-engine/          pure score calculation
-│  └─ simulation/              Simulation Controller: fixed-step loop wiring all engines
+│  └─ simulation/              SimulationRuntime (fixed step), RobotBody, headless runHeadless, level codec/layouts — shared by browser and API
 └─ docs/
 ```
 
@@ -113,6 +113,21 @@ program-store ──validate──▶ compiler ──▶ Program (IR) ──▶ 
                                                                                                   │
                                            SimulationRuntime events ──▶ console · runtime-store · mission card
 ```
+
+The compiler and runtime are packages (`@robolab/blocks`, `@robolab/simulation`),
+so the same code runs in the browser and on the server. Run flow:
+
+1. Browser: Run -> `POST /api/levels/:id/runs` `{layout, seed}`; the program is simulated
+   in the browser for display only.
+2. Browser: end -> `POST /api/runs/:id/finish` with what it saw (`RunFacts`).
+3. Server (`apps/api/src/domain/judge.ts`): re-compiles the stored program version, replays it
+   headless (`runHeadless`) on the stored layout + seed (<= 600 simulated s, also bounded by
+   wall-clock time since the run started + 5 s) and scores what *it* observed. The browser's
+   report is stored as `result.reported`, the judge's as `result.judged`, with details
+   (layout, seed, outcome, ticks, mismatches) in `result.judge`.
+
+All packages use explicit `.ts` imports and erasable TypeScript only, because the API runs
+the package sources directly with Node type stripping.
 
 Original plan (kept for reference):
 

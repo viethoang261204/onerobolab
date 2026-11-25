@@ -1,0 +1,19 @@
+{
+  "name": "@robolab/blocks",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Block program data model (serializable graph, registry, validation) and the blocks → IR compiler. Pure TypeScript, shared by the editor and the API judge.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./test-utils": "./src/test-utils.ts"
+  },
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "@robolab/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@robolab/robot-engine": "workspace:*"
+  }
+}

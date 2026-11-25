@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { judgeRun, loadPlayableLevel } from '../domain/judge.ts';
 import { scoreRun } from '../domain/scoring.ts';
-import { bearer, createTestContext, straightProgram, type TestContext } from '../test/harness.ts';
+import { bearer, createTestContext, solutionProgram, straightProgram, type TestContext } from '../test/harness.ts';
 
 let t: TestContext;
 let tokenC: string; // leminhc03 — fresh student
@@ -109,15 +110,19 @@ describe('runs', () => {
     expect(after.rows.map((r) => r.status)).toEqual(['FAILED', 'ABORTED', 'RUNNING']);
   });
 
-  test('a stopped run never passes, even with every objective claimed', async () => {
+  test('a stopped run never passes, even with a solving program and every objective claimed', async () => {
+    await call('PUT', '/api/levels/starter-01/program', { blockProgram: solutionProgram('starter-01'), createVersion: true });
     const run = (await call('POST', '/api/levels/starter-01/runs', {})).json().run;
     await age(run.id);
-    const res = (await call('POST', `/api/runs/${run.id}/finish`, { outcome: 'STOPPED', result: CLEAN })).json();
-    expect(res).toMatchObject({ passed: false, xpEarned: 0, run: { status: 'ABORTED' } });
+    const fin = await call('POST', `/api/runs/${run.id}/finish`, { outcome: 'STOPPED', result: CLEAN });
+    expect(fin.statusCode).toBe(200);
+    expect(fin.json()).toMatchObject({ passed: false, stars: 0, xpEarned: 0, run: { status: 'ABORTED' } });
+    const { rows } = await t.db.query<{ status: string }>('SELECT status FROM level_attempts WHERE id = $1', [run.id]);
+    expect(rows[0]!.status).toBe('ABORTED');
   });
 
   test('a completed run: server stars, XP once, next level unlocked, progress saved', async () => {
-    await call('PUT', '/api/levels/starter-01/program', { blockProgram: straightProgram(170), createVersion: true });
+    await call('PUT', '/api/levels/starter-01/program', { blockProgram: solutionProgram('starter-01'), createVersion: true });
     const run = (await call('POST', '/api/levels/starter-01/runs', {})).json().run;
     await age(run.id);
     const res = await call('POST', `/api/runs/${run.id}/finish`, { outcome: 'COMPLETED', result: CLEAN });
@@ -142,6 +147,23 @@ describe('runs', () => {
     expect(rows[0]!.n).toBe(1);
   });
 
+  test('layout and seed sent to POST /runs are stored on the attempt and echoed; invalid layouts are rejected', async () => {
+    const start = await call('POST', '/api/levels/starter-01/runs', { layout: 3, seed: 42 });
+    expect(start.statusCode).toBe(201);
+    const run = start.json().run;
+    expect(run).toMatchObject({ layout: 3, seed: 42 });
+    const { rows } = await t.db.query<{ layout_index: number; seed: number }>('SELECT layout_index, seed FROM level_attempts WHERE id = $1', [run.id]);
+    expect(rows[0]).toEqual({ layout_index: 3, seed: 42 });
+
+    const tooHigh = await call('POST', '/api/levels/starter-01/runs', { layout: 100 });
+    expect(tooHigh.statusCode).toBe(400);
+    expect(tooHigh.json().error.code).toBe('VALIDATION_FAILED');
+
+    const negative = await call('POST', '/api/levels/starter-01/runs', { layout: -1 });
+    expect(negative.statusCode).toBe(400);
+    expect(negative.json().error.code).toBe('VALIDATION_FAILED');
+  });
+
   test("students can't touch another student's run", async () => {
     await call('PUT', '/api/levels/starter-02/program', { blockProgram: straightProgram(100) }, tokenA);
     const theirs = (await call('POST', '/api/levels/starter-02/runs', {}, tokenA)).json().run;
@@ -153,6 +175,18 @@ describe('runs', () => {
     const run = (await call('POST', '/api/levels/starter-01/runs', {})).json().run;
     const res = await call('POST', `/api/runs/${run.id}/finish`, { outcome: 'COMPLETED', result: { ...CLEAN, stars: 3 }, xp: 99999 });
     expect(res.statusCode).toBe(400);
+  });
+});
+
+describe('seeded reference solutions pass the judge', () => {
+  test.each(['starter-01', 'starter-02'])('%s solution completes the mission cleanly', async (slug) => {
+    const level = await loadPlayableLevel(t.db, await t.levelId(slug));
+    const j = judgeRun(level, solutionProgram(slug), { layout: 0, seed: 1 }, { objectivesCompleted: [], timeSeconds: 0, collisions: 0 });
+    expect(j.kind).toBe('judged');
+    if (j.kind === 'judged') {
+      expect(j.completed).toBe(true);
+      expect(j.facts.collisions).toBe(0);
+    }
   });
 });
 

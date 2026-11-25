@@ -1,7 +1,7 @@
-import { getBlockDef } from '../../programming/blocks/block-registry';
-import type { BlockCategoryId, BlockId, BlockInstance, BlockType, ProgramState } from '../../programming/blocks/block-types';
-import { chainIds } from '../../programming/blocks/block-utils';
-import { parseProgram } from '../../programming/blocks/serialization';
+import { getBlockDef } from '@robolab/blocks';
+import type { BlockCategoryId, BlockId, BlockInstance, BlockType, ProgramState } from '@robolab/blocks';
+import { chainIds } from '@robolab/blocks';
+import { parseProgram } from '@robolab/blocks';
 import { generatePython } from '../../programming/generators/python-generator';
 
 /*

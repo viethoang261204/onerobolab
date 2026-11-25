@@ -2,7 +2,9 @@ import { createMapEngine } from '@robolab/map-engine';
 import type { MapQuery } from '@robolab/shared';
 import type { LevelDefinition } from '../../content/levels/types';
 import { buildMissionView } from '../../data/mission';
-import { CATEGORIES, categoryOf, type CategoryDef } from '../programming/blocks/block-registry';
+import { CATEGORIES, categoryOf, type CategoryDef } from '@robolab/blocks';
+import type { LucideIcon } from 'lucide-react';
+import { CATEGORY_ICONS } from '../programming/toolbox/category-icons';
 
 /*
  * Read-only views of level data for the mission cards / detail panel.
@@ -13,10 +15,9 @@ import { CATEGORIES, categoryOf, type CategoryDef } from '../programming/blocks/
 export const levelObjectives = (level: LevelDefinition): string[] => buildMissionView(level.mission, level.map, null).objectives.map((o) => o.label);
 
 /** Block categories the student can use in this level ("Available tools"), minus Events (always there). */
-export function levelTools(level: LevelDefinition): CategoryDef[] {
-  if (level.allowedBlocks === 'all') return CATEGORIES.filter((c) => c.id !== 'events');
-  const ids = new Set(level.allowedBlocks.map((t) => categoryOf(t).id));
-  return CATEGORIES.filter((c) => c.id !== 'events' && ids.has(c.id));
+export function levelTools(level: LevelDefinition): (CategoryDef & { readonly icon: LucideIcon })[] {
+  const ids = level.allowedBlocks === 'all' ? null : new Set(level.allowedBlocks.map((t) => categoryOf(t).id));
+  return CATEGORIES.filter((c) => c.id !== 'events' && (!ids || ids.has(c.id))).map((c) => ({ ...c, icon: CATEGORY_ICONS[c.id] }));
 }
 
 /** Star criteria in words (same rules as `stars.ts`). */

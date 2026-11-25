@@ -1,7 +1,7 @@
 import type { ColliderKind } from '@robolab/physics-engine';
 import type { CommandArgs } from '@robolab/robot-engine';
 import type { CargoColor, EntityId, MissionFailureReason, MissionState, RuntimeValue, Statement } from '@robolab/shared';
-import type { SensorSummary } from './RuntimeState';
+import type { SensorSummary } from './runtime-state.ts';
 
 export type ExecutionMode = 'userProgram' | 'demo';
 

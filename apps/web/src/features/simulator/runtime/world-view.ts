@@ -1,6 +1,6 @@
 import type { CargoItem, EntityId, MoverEntity, Pose2D, Vec2 } from '@robolab/shared';
 import type { PlacedCrate } from '@robolab/world-engine';
-import type { SimulationRuntime } from './SimulationRuntime';
+import type { SimulationRuntime } from '@robolab/simulation';
 
 /**
  * What the renderer may read about the interactive world, every frame:

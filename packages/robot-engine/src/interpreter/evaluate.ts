@@ -2,11 +2,11 @@ import { OBSTACLE_DISTANCE, type Expression, type Pose2D, type RuntimeValue, typ
 
 /** A problem the student can fix (shown in plain language, never as a stack trace). */
 export class ProgramProblem extends Error {
-  constructor(
-    message: string,
-    readonly blockId: string | null = null,
-  ) {
+  readonly blockId: string | null;
+
+  constructor(message: string, blockId: string | null = null) {
     super(message);
+    this.blockId = blockId;
     this.name = 'ProgramProblem';
   }
 }

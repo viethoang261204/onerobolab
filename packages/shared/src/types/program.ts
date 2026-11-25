@@ -1,5 +1,5 @@
-import type { SensorId } from './ids';
-import type { SensorColor } from './sensor';
+import type { SensorId } from './ids.ts';
+import type { SensorColor } from './sensor.ts';
 
 /**
  * RoboLab Intermediate Representation (IR).

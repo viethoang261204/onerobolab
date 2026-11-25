@@ -7,7 +7,8 @@ import { assertPlayable, levelAccess, levelStates, loadLevelRules } from '../dom
 import { countRunnableBlocks, type Program } from '../domain/program.ts';
 import { touchStreak } from '../domain/rewards.ts';
 import { findProgram, lockProgress, recordRun, snapshotVersion } from '../domain/runs.ts';
-import { RunReportSchema, scoreRun, type Scored } from '../domain/scoring.ts';
+import { loadPlayableLevel, RunSetupSchema, verdictFor } from '../domain/judge.ts';
+import { RunReportSchema } from '../domain/scoring.ts';
 import { AppError, conflict, notFound, unprocessable } from '../http/errors.ts';
 import { UuidParam } from '../http/sql.ts';
 
@@ -18,8 +19,9 @@ import { UuidParam } from '../http/sql.ts';
  *   POST /api/levels/:levelId/runs    Run pressed: a RUNNING attempt with a snapshot of the saved program
  *   POST /api/runs/:runId/finish      the run ended: the server scores it and records progress / rewards
  *
- * The client only reports what the simulator saw (objectives reached, time,
- * collisions). Pass/fail, stars, score, XP and unlocks are decided here.
+ * The client reports what its simulator showed; the server replays the run
+ * (same program version, layout and seed — domain/judge.ts) and decides
+ * pass/fail, stars, score, XP and unlocks from what it observed itself.
  */
 
 const LevelParam = z.object({ levelId: z.string().min(1).max(80) }).strict();
@@ -130,7 +132,7 @@ export function registerStudentJourneyRoutes(app: FastifyInstance, { db }: AppDe
   app.post('/api/levels/:levelId/runs', student, async (req, reply) => {
     const me = currentUser(req);
     const { levelId } = LevelParam.parse(req.params);
-    z.object({}).strict().parse(req.body ?? {});
+    const setup = RunSetupSchema.parse(req.body ?? {});
     const access = await levelAccess(db, me.id, levelId);
     assertPlayable(access);
 
@@ -146,9 +148,9 @@ export function registerStudentJourneyRoutes(app: FastifyInstance, { db }: AppDe
       const version = await snapshotVersion(q, program.id, 'AUTOSAVE');
       const { count } = countRunnableBlocks(version.program);
       const { rows } = await q.query<{ id: string; attemptNumber: number; startedAt: Date }>(
-        `INSERT INTO level_attempts (student_id, level_id, program_id, program_version_id, status, block_count)
-         VALUES ($1, $2, $3, $4, 'RUNNING', $5) RETURNING id, attempt_number AS "attemptNumber", started_at AS "startedAt"`,
-        [me.id, access.levelId, program.id, version.versionId, count],
+        `INSERT INTO level_attempts (student_id, level_id, program_id, program_version_id, status, block_count, layout_index, seed)
+         VALUES ($1, $2, $3, $4, 'RUNNING', $5, $6, $7) RETURNING id, attempt_number AS "attemptNumber", started_at AS "startedAt"`,
+        [me.id, access.levelId, program.id, version.versionId, count, setup.layout, setup.seed],
       );
       await lockProgress(q, me.id, access.levelId);
       await q.query(
@@ -156,7 +158,7 @@ export function registerStudentJourneyRoutes(app: FastifyInstance, { db }: AppDe
         [me.id, access.levelId, program.id],
       );
       await touchStreak(q, me.id);
-      return { ...rows[0]!, blockCount: count, programVersion: version.versionId };
+      return { ...rows[0]!, blockCount: count, programVersion: version.versionId, layout: setup.layout, seed: setup.seed };
     });
     return reply.status(201).send({ run });
   });
@@ -166,37 +168,43 @@ export function registerStudentJourneyRoutes(app: FastifyInstance, { db }: AppDe
     const { id } = UuidParam.parse(req.params);
     const body = FinishBody.parse(req.body);
 
-    return db.tx(async (q) => {
-      const { rows } = await q.query<{
-        levelId: string;
-        status: string;
-        programId: string;
-        versionId: string;
-        blockCount: number;
-        elapsed: number;
-        blockProgram: Program;
-      }>(
-        `SELECT a.level_id AS "levelId", a.status, a.program_id AS "programId", a.program_version_id AS "versionId", a.block_count AS "blockCount",
-                EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - a.started_at))::float8 AS elapsed, v.block_program AS "blockProgram"
-           FROM level_attempts a JOIN program_versions v ON v.id = a.program_version_id
-          WHERE a.id = $1 AND a.student_id = $2 FOR UPDATE OF a`,
-        [id, me.id],
-      );
-      const attempt = rows[0];
+    const attemptQuery = (lock: boolean) =>
+      `SELECT a.level_id AS "levelId", a.status, a.program_id AS "programId", a.program_version_id AS "versionId", a.block_count AS "blockCount",
+              a.layout_index AS layout, a.seed, EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - a.started_at))::float8 AS elapsed, v.block_program AS "blockProgram"
+         FROM level_attempts a JOIN program_versions v ON v.id = a.program_version_id
+        WHERE a.id = $1 AND a.student_id = $2 ${lock ? 'FOR UPDATE OF a' : ''}`;
+    type AttemptRow = { levelId: string; status: string; programId: string; versionId: string; blockCount: number; layout: number; seed: number; elapsed: number; blockProgram: Program };
+    const checkRunning = (attempt: AttemptRow | undefined): AttemptRow => {
       // Another student's run is indistinguishable from a missing one.
       if (!attempt) throw notFound('Run');
       if (attempt.status !== 'RUNNING') throw new AppError(409, 'RUN_FINISHED', 'This run has already been recorded.');
+      return attempt;
+    };
+
+    // Judge first, outside the transaction: the replay is CPU work and must not hold row locks.
+    const pre = checkRunning((await db.query<AttemptRow>(attemptQuery(false), [id, me.id])).rows[0]);
+    if (body.result.timeSeconds > pre.elapsed + CLOCK_SLACK_SECONDS) {
+      throw unprocessable('IMPLAUSIBLE_RESULT', 'The run reports more time than has passed since it started.', { elapsedSeconds: Math.round(pre.elapsed) });
+    }
+    const rules = await loadLevelRules(db, pre.levelId);
+    const verdict = verdictFor({
+      rules,
+      level: await loadPlayableLevel(db, pre.levelId),
+      program: pre.blockProgram,
+      setup: { layout: pre.layout, seed: pre.seed },
+      claimed: body.result,
+      clientOutcome: body.outcome,
+      blockCount: pre.blockCount,
+      // Simulated time can't exceed the wall-clock time since the run started.
+      maxSeconds: pre.elapsed + CLOCK_SLACK_SECONDS,
+    });
+
+    return db.tx(async (q) => {
+      const attempt = checkRunning((await q.query<AttemptRow>(attemptQuery(true), [id, me.id])).rows[0]);
       const access = await levelAccess(q, me.id, attempt.levelId);
       assertPlayable(access);
-      if (body.result.timeSeconds > attempt.elapsed + CLOCK_SLACK_SECONDS) {
-        throw unprocessable('IMPLAUSIBLE_RESULT', 'The run reports more time than has passed since it started.', { elapsedSeconds: Math.round(attempt.elapsed) });
-      }
-
-      const rules = await loadLevelRules(q, attempt.levelId);
       const { types } = countRunnableBlocks(attempt.blockProgram);
-      const judged = scoreRun(rules, body.result, attempt.blockCount);
-      // Only a run the simulator finished can pass; stopped / crashed runs are recorded as such.
-      const scored: Scored = body.outcome === 'COMPLETED' || !judged.passed ? judged : { ...judged, passed: false, stars: 0, score: 0 };
+      const { scored } = verdict;
       const run = await recordRun(q, {
         studentId: me.id,
         levelId: attempt.levelId,
@@ -205,10 +213,12 @@ export function registerStudentJourneyRoutes(app: FastifyInstance, { db }: AppDe
         blockCount: attempt.blockCount,
         blockTypes: types,
         rules,
-        report: body.result,
+        report: verdict.report,
+        claimed: body.result,
+        judge: verdict.judge,
         scored,
         attemptId: id,
-        failedStatus: body.outcome === 'ERROR' ? 'ERROR' : body.outcome === 'STOPPED' ? 'ABORTED' : 'FAILED',
+        failedStatus: verdict.failedStatus,
         countAttempt: false,
         recordFailedSubmission: false,
       });

@@ -1,4 +1,4 @@
-import type { BlockFragment } from '../blocks/block-types';
+import type { BlockFragment } from '@robolab/blocks';
 
 /**
  * In-app block clipboard. Holds a serializable fragment; paste always clones

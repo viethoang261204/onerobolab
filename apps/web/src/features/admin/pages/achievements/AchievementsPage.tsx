@@ -1,6 +1,6 @@
 import { Pencil, Plus, Trash2, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { CATEGORIES, blockLabel } from '../../../programming/blocks/block-registry';
+import { CATEGORIES, blockLabel } from '@robolab/blocks';
 import { ApiError } from '../../api/client';
 import { contentApi } from '../../api/endpoints';
 import type { Achievement, AchievementCriteria } from '../../api/types';

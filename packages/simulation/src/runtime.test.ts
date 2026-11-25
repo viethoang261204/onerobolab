@@ -5,11 +5,11 @@ import { ROVER } from '@robolab/robot-engine';
 import { SensorSuite } from '@robolab/sensor-engine';
 import { normalizeAngle } from '@robolab/shared';
 import { describe, expect, it } from 'vitest';
-import { compileProgram } from '../../programming/compiler/compiler';
-import { buildProgram, distanceBelow, forever, fwd, ifThen, left, obstacle, repeat, right, stop, type Spec } from '../../programming/test-utils';
-import { RobotRuntime } from '../robot/RobotMovement';
-import type { RuntimeEvent } from './RuntimeEvents';
-import { SimulationRuntime } from './SimulationRuntime';
+import { compileProgram } from '@robolab/blocks';
+import { buildProgram, distanceBelow, forever, fwd, ifThen, left, obstacle, repeat, right, stop, type Spec } from '@robolab/blocks/test-utils';
+import { RobotBody as RobotRuntime } from './robot-body.ts';
+import type { RuntimeEvent } from './runtime-events.ts';
+import { SimulationRuntime } from './runtime.ts';
 
 const map = createMapEngine().load(RESCUE_SUPPLIES);
 const spawn = RESCUE_SUPPLIES.start;

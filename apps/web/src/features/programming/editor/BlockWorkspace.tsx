@@ -1,7 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { START_ID } from '../blocks/block-model';
+import { START_ID } from '@robolab/blocks';
 import { useProgramStore } from '../state/program-store';
 import { StackView } from './BlockInstance';
 import { WorkspaceControls } from './WorkspaceControls';

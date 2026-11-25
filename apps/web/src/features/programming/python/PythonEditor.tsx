@@ -1,6 +1,6 @@
 import { AlertTriangle, Check } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import type { ProgramState } from '../blocks/block-types';
+import type { ProgramState } from '@robolab/blocks';
 import { generatePythonWithLines } from '../generators/python-generator';
 import { highlight } from '../generators/PythonView';
 import { useProgramStore } from '../state/program-store';

@@ -4,11 +4,12 @@ import { useUiStore } from '../../../stores/ui-store';
 import { cn } from '../../../utils/cn';
 import { LevelRegistry } from '../../../content/levels/registry';
 import { useLevelStore } from '../../levels/level-store';
-import { CATEGORIES, searchBlocks, type CategoryDef } from '../blocks/block-registry';
-import type { BlockCategoryId } from '../blocks/block-types';
+import { CATEGORIES, searchBlocks, type CategoryDef } from '@robolab/blocks';
+import type { BlockCategoryId } from '@robolab/blocks';
 import { useDragStore } from '../state/drag-store';
 import { BlockSearch } from './BlockSearch';
 import { ToolboxCategory } from './ToolboxCategory';
+import { CATEGORY_ICONS } from './category-icons';
 
 /**
  * Left toolbox: search + collapsible categories of draggable blocks.
@@ -69,7 +70,7 @@ export function BlockToolbox() {
             <PanelLeftOpen size={18} />
           </button>
           {categories.map((c) => {
-            const Icon = c.icon;
+            const Icon = CATEGORY_ICONS[c.id];
             return (
               <button
                 key={c.id}

@@ -1,8 +1,8 @@
 import { Ban, Copy, CopyPlus, MessageSquare, Power, Trash2, type LucideIcon } from 'lucide-react';
 import type { PointerEvent } from 'react';
 import { cn } from '../../../utils/cn';
-import { START_ID } from '../blocks/block-model';
-import type { BlockInstance } from '../blocks/block-types';
+import { START_ID } from '@robolab/blocks';
+import type { BlockInstance } from '@robolab/blocks';
 import { useProgramStore } from '../state/program-store';
 import { deleteWithAnimation } from './block-actions';
 

@@ -1,6 +1,6 @@
 import { Activity, ChevronDown, ChevronUp, Compass, Palette, Radar, Timer } from 'lucide-react';
 import { useState } from 'react';
-import { blockName } from '../../features/programming/blocks/block-registry';
+import { blockName } from '@robolab/blocks';
 import { useProgramStore } from '../../features/programming/state/program-store';
 import { useRuntimeStore } from '../../features/simulator/runtime/runtime-store';
 import { useSimulationStore } from '../../stores/simulation-store';

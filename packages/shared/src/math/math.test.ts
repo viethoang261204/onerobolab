@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { angleDelta, clamp, degToRad, normalizeAngle } from './scalar';
-import { distanceToSegment, headingToVector, isPointInArea, localToWorld, rotate } from './vec2';
+import { angleDelta, clamp, degToRad, normalizeAngle } from './scalar.ts';
+import { distanceToSegment, headingToVector, isPointInArea, localToWorld, rotate } from './vec2.ts';
 
 const close = (a: number, b: number) => expect(a).toBeCloseTo(b, 9);
 

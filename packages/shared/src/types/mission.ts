@@ -1,5 +1,5 @@
-import type { EntityId, MapId, MissionId, RobotId } from './ids';
-import type { ScoringRules } from './scoring';
+import type { EntityId, MapId, MissionId, RobotId } from './ids.ts';
+import type { ScoringRules } from './scoring.ts';
 
 interface ObjectiveBase {
   /** Unique within the mission. */

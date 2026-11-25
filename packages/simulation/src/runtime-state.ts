@@ -1,5 +1,5 @@
 import type { MissionState, Pose2D, RuntimeValue, SensorColor } from '@robolab/shared';
-import type { ExecutionMode } from './RuntimeEvents';
+import type { ExecutionMode } from './runtime-events.ts';
 
 /** Lifecycle of one run. */
 export type RunState = 'idle' | 'running' | 'paused' | 'stopped' | 'finished' | 'success' | 'error';

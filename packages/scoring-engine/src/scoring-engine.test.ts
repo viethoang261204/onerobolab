@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MissionState, ScoringRules } from '@robolab/shared';
-import { efficiencyBonus, maxScore, rankOf, scoreRun, timeBonus } from './index';
+import { efficiencyBonus, maxScore, rankOf, scoreRun, timeBonus } from './index.ts';
 
 const rules: ScoringRules = {
   completionPoints: 500,

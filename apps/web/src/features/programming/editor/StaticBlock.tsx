@@ -1,7 +1,7 @@
 import { memo, type ReactNode } from 'react';
-import { getBlockDef } from '../blocks/block-registry';
-import type { ArgDef, BlockFragment, BlockId } from '../blocks/block-types';
-import { chainIds } from '../blocks/block-utils';
+import { getBlockDef } from '@robolab/blocks';
+import type { ArgDef, BlockFragment, BlockId } from '@robolab/blocks';
+import { chainIds } from '@robolab/blocks';
 import { DropdownField, NumberField, TextField, VariableField } from './BlockFields';
 import { BlockVisual } from './BlockVisual';
 

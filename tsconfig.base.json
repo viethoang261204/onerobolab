@@ -13,6 +13,8 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "noEmit": true,
+    // Packages import with explicit .ts extensions so Node (type stripping) runs them as-is in the API.
+    "allowImportingTsExtensions": true,
     "forceConsistentCasingInFileNames": true
   }
 }

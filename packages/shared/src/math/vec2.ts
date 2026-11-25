@@ -1,4 +1,4 @@
-import type { Area2D, Pose2D, Vec2 } from '../types/geometry';
+import type { Area2D, Pose2D, Vec2 } from '../types/geometry.ts';
 
 export const vec2 = (x: number, z: number): Vec2 => ({ x, z });
 

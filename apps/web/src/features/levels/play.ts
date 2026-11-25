@@ -2,10 +2,10 @@ import { createMapEngine } from '@robolab/map-engine';
 import { ROVER } from '@robolab/robot-engine';
 import type { LevelDefinition } from '../../content/levels/types';
 import { applyVariant, variantCount } from '../../content/levels/variants';
-import { compileProgram } from '../programming/compiler/compiler';
-import type { ProgramState } from '../programming/blocks/block-types';
+import { compileProgram } from '@robolab/blocks';
+import type { ProgramState } from '@robolab/blocks';
 import { RobotRuntime } from '../simulator/robot/RobotMovement';
-import { SimulationRuntime } from '../simulator/runtime/SimulationRuntime';
+import { SimulationRuntime } from '@robolab/simulation';
 
 /** Simulated seconds a run may take in tests (the Arena takes a while). */
 export const MAX_SECONDS = 400;

@@ -1,8 +1,8 @@
 import { Vec2Math, type Pose2D, type Vec2 } from '@robolab/shared';
 import { describe, expect, it } from 'vitest';
-import { ROVER } from './catalog';
-import { bodyVelocity, stepDifferentialDrive, wheelAngleDelta } from './kinematics';
-import { PathFollower } from './path-follower';
+import { ROVER } from './catalog.ts';
+import { bodyVelocity, stepDifferentialDrive, wheelAngleDelta } from './kinematics.ts';
+import { PathFollower } from './path-follower.ts';
 
 const close = (a: number, b: number, digits = 9) => expect(a).toBeCloseTo(b, digits);
 const DT = 1 / 60;

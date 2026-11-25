@@ -1,8 +1,8 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { checkDrop, START_ID } from '../blocks/block-model';
-import { blockName, getBlockDef } from '../blocks/block-registry';
-import type { BlockFragment, BlockId, BlockInstance, BlockType, DropTarget, ProgramState } from '../blocks/block-types';
-import { buildParentIndex, createBlock, fragmentFromBlock, subtreeIds } from '../blocks/block-utils';
+import { checkDrop, START_ID } from '@robolab/blocks';
+import { blockName, getBlockDef } from '@robolab/blocks';
+import type { BlockFragment, BlockId, BlockInstance, BlockType, DropTarget, ProgramState } from '@robolab/blocks';
+import { buildParentIndex, createBlock, fragmentFromBlock, subtreeIds } from '@robolab/blocks';
 import { useDragStore, type DropHint } from '../state/drag-store';
 import { useProgramStore } from '../state/program-store';
 import { useUiStore } from '../../../stores/ui-store';

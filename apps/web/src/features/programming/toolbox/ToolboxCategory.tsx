@@ -1,8 +1,9 @@
 import { ChevronRight } from 'lucide-react';
 import { cn } from '../../../utils/cn';
-import type { CategoryDef } from '../blocks/block-registry';
-import type { BlockType } from '../blocks/block-types';
+import type { CategoryDef } from '@robolab/blocks';
+import type { BlockType } from '@robolab/blocks';
 import { PaletteBlock } from './PaletteBlock';
+import { CATEGORY_ICONS } from './category-icons';
 
 interface ToolboxCategoryProps {
   category: CategoryDef;
@@ -14,7 +15,7 @@ interface ToolboxCategoryProps {
 
 /** Collapsible category with its draggable blocks. */
 export function ToolboxCategory({ category, open, onToggle, types = category.palette }: ToolboxCategoryProps) {
-  const Icon = category.icon;
+  const Icon = CATEGORY_ICONS[category.id];
   return (
     <section id={`toolbox-${category.id}`} style={{ ['--cat' as string]: category.color }}>
       <button

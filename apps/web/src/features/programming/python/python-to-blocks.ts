@@ -1,7 +1,7 @@
-import { START_ID } from '../blocks/block-model';
-import type { BlockId, BlockInstance, BlockType, ProgramState, RootPlacement } from '../blocks/block-types';
-import { createBlock } from '../blocks/block-utils';
-import { FUNCTION_NAME } from '../blocks/block-validation';
+import { START_ID } from '@robolab/blocks';
+import type { BlockId, BlockInstance, BlockType, ProgramState, RootPlacement } from '@robolab/blocks';
+import { createBlock } from '@robolab/blocks';
+import { FUNCTION_NAME } from '@robolab/blocks';
 import { parse, PythonError, type Expr, type Stmt } from './python-parser';
 
 /*

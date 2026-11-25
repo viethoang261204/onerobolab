@@ -11,7 +11,7 @@ import {
   type Statement,
   type WheelSpeeds,
 } from '@robolab/shared';
-import { evaluateBool, evaluateNumber, ProgramProblem, type EvalContext } from './evaluate';
+import { evaluateBool, evaluateNumber, ProgramProblem, type EvalContext } from './evaluate.ts';
 
 export interface CommandQueueOptions {
   readonly maxWheelSpeed: number;
@@ -109,11 +109,12 @@ export class CommandQueue {
   private lastSource: string | null = null;
   private random: () => number;
   private readonly budget: number;
+  private readonly program: Program;
+  private readonly options: CommandQueueOptions;
 
-  constructor(
-    private readonly program: Program,
-    private readonly options: CommandQueueOptions,
-  ) {
+  constructor(program: Program, options: CommandQueueOptions) {
+    this.program = program;
+    this.options = options;
     this.budget = options.statementBudget ?? 500;
     this.speed = options.defaultSpeed ?? 0.5;
     this.random = mulberry32(options.seed ?? 1);

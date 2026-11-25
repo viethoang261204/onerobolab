@@ -1,5 +1,5 @@
 import { entityId, mapId, type MapDefinition, type MapEntity, type Vec2 } from '@robolab/shared';
-import { PathBuilder } from './path-builder';
+import { PathBuilder } from './path-builder.ts';
 
 const SIZE = { x: 7, z: 5 } as const;
 const HX = SIZE.x / 2;

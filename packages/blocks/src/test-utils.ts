@@ -1,6 +1,6 @@
-import { START_ID } from './blocks/block-model';
-import type { BlockId, BlockInstance, BlockType, FieldValue, ProgramState } from './blocks/block-types';
-import { createBlock } from './blocks/block-utils';
+import { START_ID } from './block-model.ts';
+import type { BlockId, BlockInstance, BlockType, FieldValue, ProgramState } from './block-types.ts';
+import { createBlock } from './block-utils.ts';
 
 /** Compact block-program description for tests. */
 export interface Spec {

@@ -1,5 +1,5 @@
-import type { MissionState } from '../types/mission';
-import type { RunStats, ScoreBreakdown, ScoringRules } from '../types/scoring';
+import type { MissionState } from '../types/mission.ts';
+import type { RunStats, ScoreBreakdown, ScoringRules } from '../types/scoring.ts';
 
 export interface ScoreInput {
   readonly rules: ScoringRules;

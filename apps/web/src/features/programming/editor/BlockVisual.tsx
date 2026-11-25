@@ -1,10 +1,10 @@
 import { AlertCircle, AlertTriangle, Flag, Lock, Play } from 'lucide-react';
 import type { CSSProperties, PointerEvent, ReactNode, Ref } from 'react';
 import { cn } from '../../../utils/cn';
-import { START_ID } from '../blocks/block-model';
-import { categoryOf, getBlockDef } from '../blocks/block-registry';
-import type { ArgDef, BlockInstance, SlotDef } from '../blocks/block-types';
-import type { BlockIssue } from '../blocks/block-validation';
+import { START_ID } from '@robolab/blocks';
+import { categoryOf, getBlockDef } from '@robolab/blocks';
+import type { ArgDef, BlockInstance, SlotDef } from '@robolab/blocks';
+import type { BlockIssue } from '@robolab/blocks';
 import { ConnectorSocket, ConnectorTab } from './BlockConnection';
 
 export interface BlockVisualProps {

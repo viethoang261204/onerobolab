@@ -16,14 +16,14 @@ import {
   type SimulationSnapshot,
   type Vec2,
 } from '@robolab/shared';
-import type { RobotRuntime } from '../robot/RobotMovement';
-import { RuntimeEvents, type ExecutionMode } from './RuntimeEvents';
-import { EMPTY_SENSORS, type RunState, type RuntimeSnapshot, type SensorSummary } from './RuntimeState';
+import type { RobotBody } from './robot-body.ts';
+import { RuntimeEvents, type ExecutionMode } from './runtime-events.ts';
+import { EMPTY_SENSORS, type RunState, type RuntimeSnapshot, type SensorSummary } from './runtime-state.ts';
 
 export interface SimulationRuntimeOptions {
   readonly map: MapQuery;
-  /** The robot's live state (kinematics from UI 3; read by the renderer). */
-  readonly robot: RobotRuntime;
+  /** The robot's live state (kinematics; the renderer reads it per frame). */
+  readonly robot: RobotBody;
   readonly mission: MissionDefinition | null;
   readonly config?: Partial<SimulationConfig>;
   /** Seed for random blocks (determinism / grading). */
@@ -33,6 +33,9 @@ export interface SimulationRuntimeOptions {
 }
 
 /** Below these speeds the robot counts as resting (gate scanners), m/s and rad/s. */
+/** Seed for random blocks when a run doesn't choose one (the browser sends it with every recorded run). */
+export const DEFAULT_RUN_SEED = 1;
+
 const REST_LINEAR = 0.01;
 const REST_ANGULAR = 0.05;
 
@@ -90,8 +93,10 @@ export class SimulationRuntime {
   private errorBlockId: string | null = null;
   private mission: MissionState | null = null;
   private readonly half: Vec2;
+  private readonly opts: SimulationRuntimeOptions;
 
-  constructor(private readonly opts: SimulationRuntimeOptions) {
+  constructor(opts: SimulationRuntimeOptions) {
+    this.opts = opts;
     this.config = { ...DEFAULT_SIMULATION_CONFIG, ...opts.config };
     this.world = new CollisionWorld(opts.map);
     this.objects = new WorldObjects(opts.map);
@@ -130,7 +135,7 @@ export class SimulationRuntime {
       maxWheelSpeed: d.maxWheelSpeed,
       trackWidth: d.wheelBase,
       defaultSpeed: 0.5,
-      seed: this.opts.seed ?? 1,
+      seed: this.opts.seed ?? DEFAULT_RUN_SEED,
       data: this.opts.data ?? {},
       interact: (action, pose) => this.interact(action, pose),
     });

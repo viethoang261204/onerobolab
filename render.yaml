@@ -9,18 +9,20 @@ services:
     region: singapore
     rootDir: .
     # --prod=false: NODE_ENV=production would otherwise skip the TypeScript compiler (a devDependency).
-    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm --filter @robolab/api build
-    startCommand: node --max-old-space-size=256 apps/api/dist/server.js
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm --filter @robolab/api typecheck
+    startCommand: node --max-old-space-size=256 apps/api/src/server.ts
     healthCheckPath: /health
     autoDeploy: true
     buildFilter:
       paths:
         - apps/api/**
+        - packages/**
         - database/**
         - package.json
         - pnpm-lock.yaml
         - pnpm-workspace.yaml
         - tsconfig.base.json
+        - tsconfig.packages.json
         - render.yaml
     envVars:
       - key: NODE_VERSION

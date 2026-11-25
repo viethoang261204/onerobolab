@@ -1,6 +1,6 @@
-import type { MissionDefinition, MissionState } from '../types/mission';
-import type { SimulationSnapshot } from '../types/simulation';
-import type { MapQuery } from './map-engine';
+import type { MissionDefinition, MissionState } from '../types/mission.ts';
+import type { SimulationSnapshot } from '../types/simulation.ts';
+import type { MapQuery } from './map-engine.ts';
 
 /**
  * Mission Engine: observes snapshots and derives mission state. It never

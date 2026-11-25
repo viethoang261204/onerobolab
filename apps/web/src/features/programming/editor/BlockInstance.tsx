@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import type { ArgDef, BlockId } from '../blocks/block-types';
-import { chainIds } from '../blocks/block-utils';
+import type { ArgDef, BlockId } from '@robolab/blocks';
+import { chainIds } from '@robolab/blocks';
 import { useRuntimeStore } from '../../simulator/runtime/runtime-store';
 import { useDragStore } from '../state/drag-store';
 import { useProgramStore } from '../state/program-store';

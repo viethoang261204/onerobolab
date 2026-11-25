@@ -14,7 +14,7 @@ import { decideProgram } from '../programming/state/program-sync';
 import { playerStats } from '../world-map/world-progress';
 import { buildCatalog, levelFromApi, toMap } from './from-api';
 import { missionSettingsOf } from './mission-settings';
-import { objectiveToRow } from './objective-codec';
+import { objectiveToRow } from '@robolab/simulation';
 
 /** Server-render to HTML without React's text separators. */
 const html = (el: ReactElement) => renderToString(el).replace(/<!-- -->/g, '');
@@ -226,7 +226,7 @@ describe('run session', () => {
     api.finishRun.mockResolvedValue(finish);
     beginRun('starter-01');
     const res = await endRun('COMPLETED', report);
-    expect(api.startRun).toHaveBeenCalledWith('starter-01');
+    expect(api.startRun).toHaveBeenCalledWith('starter-01', { layout: 0, seed: 1 });
     expect(api.finishRun).toHaveBeenCalledWith('r1', 'COMPLETED', report);
     expect(res).toMatchObject({ kind: 'saved', finish: { xpEarned: 50 } });
     // A run finishes once.

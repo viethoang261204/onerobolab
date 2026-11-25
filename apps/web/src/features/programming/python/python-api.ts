@@ -1,4 +1,4 @@
-import type { BlockType } from '../blocks/block-types';
+import type { BlockType } from '@robolab/blocks';
 
 /** One entry of the Python reference: what to type, what it does. */
 export interface PythonCommand {

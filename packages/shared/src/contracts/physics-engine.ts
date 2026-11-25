@@ -1,8 +1,8 @@
-import type { Pose2D, Vec3 } from '../types/geometry';
-import type { EntityId } from '../types/ids';
-import type { BodyVelocity, RobotDefinition, WheelSpeeds } from '../types/robot';
-import type { ContactEvent, DynamicEntityPose } from '../types/simulation';
-import type { MapQuery } from './map-engine';
+import type { Pose2D, Vec3 } from '../types/geometry.ts';
+import type { EntityId } from '../types/ids.ts';
+import type { BodyVelocity, RobotDefinition, WheelSpeeds } from '../types/robot.ts';
+import type { ContactEvent, DynamicEntityPose } from '../types/simulation.ts';
+import type { MapQuery } from './map-engine.ts';
 
 export interface RaycastHit {
   readonly distance: number;

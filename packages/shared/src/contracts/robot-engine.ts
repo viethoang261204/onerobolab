@@ -1,8 +1,8 @@
-import type { Pose2D } from '../types/geometry';
-import type { Program, ProgramStatus } from '../types/program';
-import type { RobotDefinition, RobotState, WheelSpeeds } from '../types/robot';
-import type { SensorSnapshot } from '../types/sensor';
-import type { PhysicsStepResult } from './physics-engine';
+import type { Pose2D } from '../types/geometry.ts';
+import type { Program, ProgramStatus } from '../types/program.ts';
+import type { RobotDefinition, RobotState, WheelSpeeds } from '../types/robot.ts';
+import type { SensorSnapshot } from '../types/sensor.ts';
+import type { PhysicsStepResult } from './physics-engine.ts';
 
 export interface RobotTickInput {
   readonly dt: number;

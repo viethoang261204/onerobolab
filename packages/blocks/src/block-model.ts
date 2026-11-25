@@ -1,6 +1,6 @@
-import { getBlockDef } from './block-registry';
-import type { BlockFragment, BlockId, BlockInstance, DropTarget, FieldValue, ProgramState } from './block-types';
-import { buildParentIndex, chainTail, cloneFragment, extractFragment, rootOf, subtreeIds } from './block-utils';
+import { getBlockDef } from './block-registry.ts';
+import type { BlockFragment, BlockId, BlockInstance, DropTarget, FieldValue, ProgramState } from './block-types.ts';
+import { buildParentIndex, chainTail, cloneFragment, extractFragment, rootOf, subtreeIds } from './block-utils.ts';
 
 /*
  * Pure, immutable program operations. Every function returns a new

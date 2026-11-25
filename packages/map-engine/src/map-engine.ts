@@ -131,7 +131,10 @@ class LoadedMap implements MapQuery {
   readonly bounds: Rect2D;
   private readonly byType: ReadonlyMap<MapEntityType, readonly MapEntity[]>;
 
-  constructor(readonly definition: MapDefinition) {
+  readonly definition: MapDefinition;
+
+  constructor(definition: MapDefinition) {
+    this.definition = definition;
     this.bounds = boundsOf(definition);
     const byType = new Map<MapEntityType, MapEntity[]>();
     for (const entity of definition.entities) {
@@ -183,8 +186,11 @@ class LoadedMap implements MapQuery {
 }
 
 export class MapValidationError extends Error {
-  constructor(readonly issues: readonly MapValidationIssue[]) {
+  readonly issues: readonly MapValidationIssue[];
+
+  constructor(issues: readonly MapValidationIssue[]) {
     super(`Invalid map: ${issues.map((i) => i.message).join(' ')}`);
+    this.issues = issues;
     this.name = 'MapValidationError';
   }
 }

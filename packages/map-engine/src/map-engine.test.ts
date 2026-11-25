@@ -1,7 +1,7 @@
 import { entityId, type MapDefinition } from '@robolab/shared';
 import { describe, expect, it } from 'vitest';
-import { createMapEngine, MapValidationError, validateMap } from './map-engine';
-import { DEMO_ARENA } from './maps/demo-arena';
+import { createMapEngine, MapValidationError, validateMap } from './map-engine.ts';
+import { DEMO_ARENA } from './maps/demo-arena.ts';
 
 describe('validateMap', () => {
   it('accepts the demo arena', () => {

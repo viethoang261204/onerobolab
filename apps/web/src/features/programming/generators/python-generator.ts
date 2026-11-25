@@ -1,7 +1,7 @@
-import { getBlockDef } from '../blocks/block-registry';
-import { START_ID } from '../blocks/block-model';
-import type { BlockId, BlockInstance, ProgramState } from '../blocks/block-types';
-import { chainIds } from '../blocks/block-utils';
+import { getBlockDef } from '@robolab/blocks';
+import { START_ID } from '@robolab/blocks';
+import type { BlockId, BlockInstance, ProgramState } from '@robolab/blocks';
+import { chainIds } from '@robolab/blocks';
 
 /*
  * Block tree → Python in the OneRoboLab dialect (the `onerobolab` module):

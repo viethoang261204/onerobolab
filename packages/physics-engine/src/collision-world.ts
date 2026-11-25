@@ -157,7 +157,10 @@ export class CollisionWorld implements PhysicsQuery {
   private lastPushes: { crate: Crate; from: Vec2 }[] = [];
   private readonly bounds: { min: Vec2; max: Vec2 };
 
-  constructor(private readonly map: MapQuery) {
+  private readonly map: MapQuery;
+
+  constructor(map: MapQuery) {
+    this.map = map;
     const colliders: Collider[] = [];
     for (const w of map.entitiesOfType('wall')) colliders.push(segmentRect(w.id, 'barrier', w.from, w.to, w.thickness));
     const crates: Crate[] = [];

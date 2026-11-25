@@ -31,11 +31,12 @@ export class PathFollower {
   private progress = 0;
   private readonly cumulative: number[];
   private readonly total: number;
+  private readonly path: readonly Vec2[];
+  private readonly options: PathFollowerOptions;
 
-  constructor(
-    private readonly path: readonly Vec2[],
-    private readonly options: PathFollowerOptions,
-  ) {
+  constructor(path: readonly Vec2[], options: PathFollowerOptions) {
+    this.path = path;
+    this.options = options;
     if (path.length < 2) throw new Error('PathFollower needs at least two points.');
     this.cumulative = [0];
     for (let i = 1; i < path.length; i++) {

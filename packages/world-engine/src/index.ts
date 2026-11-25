@@ -4,4 +4,4 @@
  * and live floor signals (traffic lights, crate colours). Pure TypeScript,
  * depends only on `@robolab/shared`.
  */
-export { PICK_RADIUS, REACH, reachPoint, WorldObjects, type DropResult, type PickResult, type PlacedCrate } from './world-objects';
+export { PICK_RADIUS, REACH, reachPoint, WorldObjects, type DropResult, type PickResult, type PlacedCrate } from './world-objects.ts';

@@ -63,7 +63,12 @@ export interface RunInput {
   readonly blockCount: number;
   readonly blockTypes: ReadonlySet<string>;
   readonly rules: LevelRules & { readonly xpReward: number };
+  /** What the run judge observed (the facts the verdict is computed from). */
   readonly report: RunReport;
+  /** What the browser reported, kept for comparison (defaults to `report`). */
+  readonly claimed?: RunReport;
+  /** Judge details (layout, seed, outcome, mismatches) stored in `result.judge`. */
+  readonly judge?: Record<string, unknown>;
   readonly scored: Scored;
   /** Finalise this RUNNING attempt instead of inserting a new one. */
   readonly attemptId?: string;
@@ -99,7 +104,14 @@ export async function recordRun(q: Queryable, r: RunInput): Promise<RunOutcome> 
   const status = passed ? 'PASSED' : (r.failedStatus ?? 'FAILED');
   const firstCompletion = passed && progress.status !== 'COMPLETED';
   const newBest = passed && scored.stars > progress.best_stars;
-  const resultJson = JSON.stringify({ reported: report, objectives: scored.objectives, criteria: scored.criteria, reasons: scored.reasons });
+  const resultJson = JSON.stringify({
+    reported: r.claimed ?? report,
+    judged: report,
+    ...(r.judge && { judge: r.judge }),
+    objectives: scored.objectives,
+    criteria: scored.criteria,
+    reasons: scored.reasons,
+  });
 
   let submissionId: string | null = null;
   if (passed || r.recordFailedSubmission) {

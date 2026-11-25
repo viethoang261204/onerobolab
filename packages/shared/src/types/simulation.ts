@@ -1,10 +1,10 @@
-import type { Pose2D } from './geometry';
-import type { EntityId } from './ids';
-import type { MissionState } from './mission';
-import type { ProgramStatus } from './program';
-import type { RobotState } from './robot';
-import type { ScoreBreakdown } from './scoring';
-import type { SensorSnapshot } from './sensor';
+import type { Pose2D } from './geometry.ts';
+import type { EntityId } from './ids.ts';
+import type { MissionState } from './mission.ts';
+import type { ProgramStatus } from './program.ts';
+import type { RobotState } from './robot.ts';
+import type { ScoreBreakdown } from './scoring.ts';
+import type { SensorSnapshot } from './sensor.ts';
 
 /** Fixed-timestep configuration. Determinism depends on a constant `fixedDt`. */
 export interface SimulationConfig {

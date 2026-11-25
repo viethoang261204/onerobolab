@@ -1,4 +1,4 @@
-import type { BlockId } from '../blocks/block-types';
+import type { BlockId } from '@robolab/blocks';
 import { useProgramStore } from '../state/program-store';
 import { workspaceRegistry } from './workspace-registry';
 
