@@ -1,3 +1,5 @@
+import { messagesFor, type Locale } from '../../i18n/i18n';
+import { garageMessages } from '../garage.messages';
 import type { UnlockRule } from './catalog';
 
 /** What the journey has unlocked so far (derived from progress; see `garageProgress`). */
@@ -13,11 +15,12 @@ export const isUnlocked = (rule: UnlockRule, ctx: UnlockContext): boolean =>
   rule.type === 'free' || (rule.type === 'world' ? ctx.openWorlds.has(rule.world) : ctx.missionsCompleted >= rule.count);
 
 /** "Reach World 2 · Canyon Circuit" / "Complete 5 missions (3/5)". */
-export function unlockHint(rule: UnlockRule, ctx: UnlockContext): string {
-  if (rule.type === 'free') return 'Available';
+export function unlockHint(rule: UnlockRule, ctx: UnlockContext, locale?: Locale): string {
+  const m = messagesFor(garageMessages, locale);
+  if (rule.type === 'free') return m.unlockAvailable;
   if (rule.type === 'world') {
     const name = ctx.worldNames.get(rule.world);
-    return `Reach World ${rule.world}${name ? ` · ${name}` : ''}`;
+    return m.unlockWorld(name !== undefined ? { world: rule.world, name } : { world: rule.world });
   }
-  return `Complete ${rule.count} missions (${Math.min(ctx.missionsCompleted, rule.count)}/${rule.count})`;
+  return m.unlockMissions({ count: rule.count, done: Math.min(ctx.missionsCompleted, rule.count) });
 }

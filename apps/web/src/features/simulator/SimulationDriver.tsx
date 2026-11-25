@@ -8,12 +8,16 @@ import type { RobotRuntime } from './robot/RobotMovement';
 import { AudioManager } from '../audio/audio-manager';
 import { currentLevel, recordAttempt, useLevelStore, type RunFacts } from '../levels/level-store';
 import { effectsBus } from './effects/effects-bus';
-import { collisionHint, collisionMessage, describeCommand, describeResult, failureMessage, ruleFailure } from './runtime/describe';
+import { colorName, collisionHint, collisionMessage, describeCommand, describeResult, failureMessage, ruleFailure } from './runtime/describe';
 import { runController } from './runtime/run-controller';
 import { useRuntimeStore } from './runtime/runtime-store';
 import type { RuntimeEvent } from '@robolab/simulation';
 import { SimulationRuntime } from '@robolab/simulation';
 import { publishWorld } from './runtime/world-view';
+import { messagesFor } from '../i18n/i18n';
+import { runtimeMessages } from './runtime/runtime.messages';
+
+const m = () => messagesFor(runtimeMessages);
 
 /** UI snapshot rate while running (Hz). */
 const SNAPSHOT_HZ = 8;
@@ -49,7 +53,7 @@ export function SimulationDriver({ runtime: robot, map, data }: { runtime: Robot
       const push = () => useRuntimeStore.getState().apply(sim.snapshot());
       switch (e.type) {
         case 'programStarted':
-          if (e.mode === 'demo') logToConsole('info', 'Demo autopilot started.');
+          if (e.mode === 'demo') logToConsole('info', m().demoStarted);
           else recordAttempt();
           AudioManager.play('programStart');
           push();
@@ -66,14 +70,14 @@ export function SimulationDriver({ runtime: robot, map, data }: { runtime: Robot
           break;
         }
         case 'checkpointReached': {
-          logToConsole('success', `Checkpoint ${e.order} reached!`);
+          logToConsole('success', m().checkpointReached({ n: e.order }));
           AudioManager.play('checkpoint');
           const cp = map.entitiesOfType('checkpoint').find((c) => c.order === e.order);
           if (cp) effectsBus.emit({ type: 'burst', x: cp.area.center.x, z: cp.area.center.z, color: '#22d3ee' });
           break;
         }
         case 'goalReached': {
-          logToConsole('success', 'GOAL REACHED');
+          logToConsole('success', m().goalReached);
           const g = map.definition.finish.center;
           effectsBus.emit({ type: 'burst', x: g.x, z: g.z, color: '#4ade80', count: 40 });
           break;
@@ -82,7 +86,7 @@ export function SimulationDriver({ runtime: robot, map, data }: { runtime: Robot
           useRuntimeStore.getState().apply({ mission: e.mission });
           break;
         case 'missionComplete':
-          logToConsole('success', '★ MISSION COMPLETE');
+          logToConsole('success', m().missionComplete);
           AudioManager.play('missionComplete');
           push();
           useSimulationStore.getState().settle('finished');
@@ -101,21 +105,21 @@ export function SimulationDriver({ runtime: robot, map, data }: { runtime: Robot
           break;
         }
         case 'gateOpened': {
-          logToConsole('success', 'Scanner OK — the gate opens.');
+          logToConsole('success', m().gateOpens);
           AudioManager.play('checkpoint');
           const g = map.entitiesOfType('gate').find((x) => x.id === e.entityId);
           if (g) effectsBus.emit({ type: 'burst', x: (g.from.x + g.to.x) / 2, z: (g.from.z + g.to.z) / 2, color: '#facc15' });
           break;
         }
         case 'cargoPicked':
-          logToConsole('info', `PICK UP — ${e.color ? `a ${e.color} crate` : 'a crate'}`);
+          logToConsole('info', e.color ? m().pickUpColor({ color: colorName(e.color) }) : m().pickUp);
           break;
         case 'cargoDropped':
           if (e.correct) {
-            logToConsole('success', 'Crate delivered!');
+            logToConsole('success', m().crateDelivered);
             AudioManager.play('checkpoint');
             effectsBus.emit({ type: 'burst', x: e.x, z: e.z, color: '#4ade80' });
-          } else logToConsole('error', 'The crate was set down outside its delivery zone.');
+          } else logToConsole('error', m().crateWrongPlace);
           break;
         case 'collision':
           logToConsole('error', collisionMessage(e.kind));
@@ -124,27 +128,27 @@ export function SimulationDriver({ runtime: robot, map, data }: { runtime: Robot
           useSimulationStore.getState().settle('error');
           {
             const allowed = currentLevel().allowedBlocks;
-            if (isUserRun()) useLevelStore.getState().failRun('Robot stopped', collisionHint(e.kind, allowed === 'all' || allowed.includes('sensor.obstacle')), facts(), 'FAILED');
+            if (isUserRun()) useLevelStore.getState().failRun(m().robotStoppedTitle, collisionHint(e.kind, allowed === 'all' || allowed.includes('sensor.obstacle')), facts(), 'FAILED');
           }
           break;
         case 'runtimeError':
-          logToConsole('error', `⚠ Robot stopped — ${e.message}`);
+          logToConsole('error', m().runtimeError({ message: e.message }));
           AudioManager.play('collision');
           push();
           useSimulationStore.getState().settle('error');
-          if (isUserRun()) useLevelStore.getState().failRun('Program error', e.message, facts(), 'ERROR');
+          if (isUserRun()) useLevelStore.getState().failRun(m().programErrorTitle, e.message, facts(), 'ERROR');
           break;
         case 'programFinished':
-          logToConsole('info', e.reason === 'stopBlock' ? 'Program ended at a STOP block.' : 'Program finished.');
+          logToConsole('info', e.reason === 'stopBlock' ? m().endedAtStop : m().programFinished);
           push();
           useSimulationStore.getState().settle('finished');
           if (sim.snapshot().mission?.status === 'running') {
-            logToConsole('info', 'The robot hasn’t reached the goal yet — add more blocks and run again.');
+            logToConsole('info', m().goalNotReached);
             if (isUserRun()) {
               // Delivery missions: the robot has to come to rest ON the pad.
               const msg = currentLevel().mission.stopInFinish
-                ? 'The robot stopped outside the delivery zone. Check the distances — the robot has to stop on the pad.'
-                : 'The program ended before the robot reached the goal. Add more blocks or change the numbers, then try again.';
+                ? m().stoppedOutsidePad
+                : m().endedBeforeGoal;
               useLevelStore.getState().incompleteRun(msg, facts());
             }
           }

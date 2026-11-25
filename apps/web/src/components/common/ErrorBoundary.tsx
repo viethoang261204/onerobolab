@@ -1,6 +1,8 @@
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { messagesFor } from '../../features/i18n/i18n';
 import { buttonClass } from './Button';
+import { commonMessages } from './common.messages';
 
 interface ErrorBoundaryProps {
   /** Student-facing title ("Level could not be loaded"). */
@@ -36,14 +38,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   override render(): ReactNode {
     if (!this.state.failed) return this.props.children;
+    const m = messagesFor(commonMessages);
     return (
       <div className="flex h-full w-full items-center justify-center bg-bg p-6">
         <div className="glass max-w-[340px] rounded-[var(--radius-dialog)] p-6 text-center">
           <AlertTriangle className="mx-auto text-warning" size={30} />
           <h2 className="mt-2 font-display text-[18px] font-black uppercase tracking-wide text-white">{this.props.title}</h2>
-          <p className="mt-2 text-[13px] text-muted">Something went wrong on our side. Your program is saved.</p>
+          <p className="mt-2 text-[13px] text-muted">{m.errorBody}</p>
           <button type="button" onClick={this.retry} className={buttonClass('primary', 'mx-auto mt-4')}>
-            <RotateCcw size={15} /> Try again
+            <RotateCcw size={15} /> {m.tryAgain}
           </button>
         </div>
       </div>

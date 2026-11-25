@@ -3,6 +3,7 @@ import { ErrorBoundary } from '../../../components/common/ErrorBoundary';
 import { adventureFor } from '../../../content/adventures/registry';
 import { useViewportWidth } from '../../../hooks/useViewportWidth';
 import { Analytics } from '../../analytics/analytics';
+import { useLocale, useMessages } from '../../i18n/i18n';
 import { LevelDetailPanel } from '../../level-selection/components/LevelDetailPanel';
 import { startMission } from '../../level-selection/start-mission';
 import { useLevelStore } from '../../levels/level-store';
@@ -11,6 +12,7 @@ import { paths } from '../../router/routes';
 import { resolveWorldRoute } from '../../world-map/map-view';
 import { useWorldMapStore } from '../../world-map/world-map.store';
 import { continueTarget, statusOfLevel, summarizeWorlds } from '../../world-map/world-progress';
+import { adventureMapMessages } from '../adventure-map.messages';
 import { adventureView } from '../adventure-state';
 import type { StopView } from '../adventure.types';
 import { MissionDetailPanel } from '../components/MissionDetailPanel';
@@ -21,6 +23,8 @@ import type { MapCamera } from '../scene3d/CameraRig';
 
 /** Below this width the world panel starts collapsed (tablets). */
 const COLLAPSE_BELOW = 1180;
+/** Below this width the HUD uses a compact top bar + bottom sheet. */
+const SHEET_BELOW = 1024;
 
 /**
  * `/world/:worldId[/level/:levelId]` — inside a world: the adventure map.
@@ -29,8 +33,10 @@ const COLLAPSE_BELOW = 1180;
  * Everything shown is derived from the level progress and the catalog.
  */
 export default function AdventureMapPage({ worldId, levelId }: { worldId: string; levelId: string | null }) {
+  const m = useMessages(adventureMapMessages);
+  const locale = useLocale();
   const progress = useLevelStore((s) => s.progress);
-  const summaries = useMemo(() => summarizeWorlds(progress), [progress]);
+  const summaries = useMemo(() => summarizeWorlds(progress), [progress, locale]);
   const resolved = useMemo(() => resolveWorldRoute(worldId, levelId, summaries, progress), [worldId, levelId, summaries, progress]);
   const summary = resolved.entered;
 
@@ -53,12 +59,13 @@ export default function AdventureMapPage({ worldId, levelId }: { worldId: string
       layout && summary
         ? adventureView({ layout, levels: summary.levels, progress, statusOf: (id) => statusOfLevel(id, progress), continueLevelId: continueTarget(progress).level.id })
         : null,
-    [layout, summary, progress],
+    [layout, summary, progress, locale],
   );
 
   const camera = useRef<MapCamera | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const width = useViewportWidth();
+  const compact = width < SHEET_BELOW;
   const [collapsedPref, setCollapsed] = useState<boolean | null>(null);
   const collapsed = collapsedPref ?? width < COLLAPSE_BELOW;
   useEffect(() => setSelectedId(null), [worldId]);
@@ -96,14 +103,15 @@ export default function AdventureMapPage({ worldId, levelId }: { worldId: string
   const selected = selectedId ? (view.stops.find((s) => s.id === selectedId) ?? null) : null;
   const level = resolved.level;
   const levelStop = level ? view.stops.find((s) => s.levelId === level.id) : undefined;
+  const inset = compact ? 0 : (collapsed ? HUD_WIDTH.collapsed : HUD_WIDTH.open) + 12;
 
   return (
-    <main className="relative min-h-0 flex-1 overflow-hidden animate-page-in" aria-label={`${world.name} map`}>
-      <ErrorBoundary title="The world map could not be shown">
-        <WorldMap worldName={world.name} layout={layout} view={view} selectedId={selectedId ?? levelStop?.id ?? null} onOpen={open} camera={camera} inset={(collapsed ? HUD_WIDTH.collapsed : HUD_WIDTH.open) + 12} />
+    <main className="relative min-h-0 flex-1 overflow-hidden animate-page-in" aria-label={m.pageAria({ worldName: world.name })}>
+      <ErrorBoundary title={m.mapErrorTitle}>
+        <WorldMap worldName={world.name} layout={layout} view={view} selectedId={selectedId ?? levelStop?.id ?? null} onOpen={open} camera={camera} inset={inset} />
       </ErrorBoundary>
 
-      <div className="pointer-events-none absolute inset-y-0 left-0 flex flex-col p-3">
+      <div className={compact ? 'pointer-events-none absolute inset-x-2 top-2 z-20 sm:inset-x-3 sm:top-3' : 'pointer-events-none absolute inset-y-0 left-0 flex flex-col p-3'}>
         <WorldSidebar
           world={world}
           intro={adventure.intro}
@@ -111,6 +119,7 @@ export default function AdventureMapPage({ worldId, levelId }: { worldId: string
           stars={summary.stars}
           maxStars={summary.maxStars}
           collapsed={collapsed}
+          sheet={compact}
           onToggle={() => setCollapsed(!collapsed)}
           onContinue={onContinue}
           onBack={() => navigate(paths.worldMap())}

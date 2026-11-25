@@ -1,6 +1,8 @@
 import { Check, Crown, Diamond, Lock, ShieldCheck, Star, Zap } from 'lucide-react';
 import { memo, type ReactNode } from 'react';
 import { cn } from '../../../utils/cn';
+import { formatNumber, messagesFor, useLocale, useMessages, type Locale } from '../../i18n/i18n';
+import { adventureMapMessages } from '../adventure-map.messages';
 import type { StopView } from '../adventure.types';
 
 /*
@@ -16,11 +18,21 @@ export const STATUS_TEXT: Record<StopView['status'], string> = {
   locked: 'Locked',
 };
 
-export function statusText(stop: StopView): string {
-  if (stop.kind === 'checkpoint') return stop.status === 'completed' ? 'Checkpoint reached' : 'Checkpoint ahead';
-  if (stop.kind === 'gate') return stop.status === 'completed' ? 'Gate open' : 'Gate closed';
-  if (stop.planned) return 'Coming soon';
-  return STATUS_TEXT[stop.status];
+export function statusText(stop: StopView, locale?: Locale): string {
+  const m = messagesFor(adventureMapMessages, locale);
+  if (stop.kind === 'checkpoint') return stop.status === 'completed' ? m.checkpointReached : m.checkpointAhead;
+  if (stop.kind === 'gate') return stop.status === 'completed' ? m.gateOpen : m.gateClosed;
+  if (stop.planned) return m.statusComingSoon;
+  switch (stop.status) {
+    case 'completed':
+      return m.statusCompleted;
+    case 'current':
+      return m.statusCurrent;
+    case 'available':
+      return m.statusAvailable;
+    case 'locked':
+      return m.statusLocked;
+  }
 }
 
 export interface MarkerProps {
@@ -31,6 +43,8 @@ export interface MarkerProps {
 
 /** Hover / focus card: "09 · River Crossing", status or lock reason, reward. */
 function Tooltip({ stop }: { stop: StopView }) {
+  const m = useMessages(adventureMapMessages);
+  const locale = useLocale();
   const marker = stop.kind === 'checkpoint' || stop.kind === 'gate';
   return (
     <span
@@ -39,14 +53,14 @@ function Tooltip({ stop }: { stop: StopView }) {
     >
       <span className="block text-[13.5px] font-bold leading-tight text-white">{marker ? stop.label : `${stop.label} · ${stop.title}`}</span>
       {marker && <span className="block text-[12px] text-[#cbd5e1]">{stop.title}</span>}
-      <span className="mt-0.5 block text-[12px] text-[#9fb0cc]">{stop.status === 'locked' && stop.lockReason ? stop.lockReason : (stop.skills[0] ?? statusText(stop))}</span>
+      <span className="mt-0.5 block text-[12px] text-[#9fb0cc]">{stop.status === 'locked' && stop.lockReason ? stop.lockReason : (stop.skills[0] ?? statusText(stop, locale))}</span>
       {stop.reward.xp > 0 && (
         <span className="mt-1 flex items-center gap-2 text-[12px] font-bold">
           <span className="flex items-center gap-0.5 text-[#fde68a]">
             <Star size={11} className="fill-[#fbbf24] text-[#fbbf24]" /> {stop.reward.stars}
           </span>
           <span className="flex items-center gap-0.5 text-cyan">
-            <Zap size={11} /> +{stop.reward.xp} XP
+            <Zap size={11} /> {m.xpShort({ xp: formatNumber(stop.reward.xp, locale) })}
           </span>
         </span>
       )}
@@ -54,21 +68,20 @@ function Tooltip({ stop }: { stop: StopView }) {
   );
 }
 
-function ariaLabel(stop: StopView): string {
-  const who = stop.kind === 'challenge' ? `Optional challenge ${stop.label}` : stop.number ? `Mission ${stop.label}` : stop.label;
-  return `${who}: ${stop.title}. ${statusText(stop)}${stop.bestStars ? `, ${stop.bestStars} of 3 stars` : ''}`;
-}
-
 function Shell({ stop, selected, onOpen, children }: MarkerProps & { children: ReactNode }) {
+  const m = useMessages(adventureMapMessages);
+  const locale = useLocale();
+  const who = stop.kind === 'challenge' ? m.optionalChallenge({ label: stop.label }) : stop.number ? m.missionLabel({ label: stop.label }) : stop.label;
+  const label = m.stopAria({ who, title: stop.title, status: statusText(stop, locale), stars: stop.bestStars });
   return (
     <button
       type="button"
       data-stop={stop.id}
-      aria-label={ariaLabel(stop)}
+      aria-label={label}
       aria-current={stop.status === 'current' ? 'step' : undefined}
       aria-pressed={selected}
       onClick={() => onOpen(stop)}
-      className="adv-node group pointer-events-auto relative flex flex-col items-center outline-none"
+      className="adv-node group pointer-events-auto relative flex min-h-11 min-w-11 flex-col items-center justify-center outline-none"
     >
       {children}
       <Tooltip stop={stop} />
@@ -91,7 +104,7 @@ export const LevelNode = memo(function LevelNode(props: MarkerProps) {
   return (
     <Shell {...props}>
       {stop.status === 'locked' && (
-        <span className="absolute -top-3 z-10 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#1e293b] text-[#cbd5e1] ring-2 ring-[#0b1426]" aria-hidden="true">
+        <span className="absolute -top-2 z-10 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#1e293b] text-[#cbd5e1] ring-2 ring-[#0b1426]" aria-hidden="true">
           <Lock size={10} strokeWidth={3} />
         </span>
       )}

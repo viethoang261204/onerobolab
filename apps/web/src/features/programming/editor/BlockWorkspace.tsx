@@ -2,8 +2,11 @@ import { ArrowLeft } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { START_ID } from '@robolab/blocks';
+import { useMessages } from '../../i18n/i18n';
+import { programmingMessages } from '../programming.messages';
 import { useProgramStore } from '../state/program-store';
 import { StackView } from './BlockInstance';
+import { cancelActiveDrag } from './drag-controller';
 import { WorkspaceControls } from './WorkspaceControls';
 import { workspaceRegistry } from './workspace-registry';
 
@@ -16,6 +19,11 @@ interface View {
   x: number;
   y: number;
   zoom: number;
+}
+
+interface Pt {
+  x: number;
+  y: number;
 }
 
 /** One stack placed on the workspace at its stored position. */
@@ -34,9 +42,11 @@ const RootStack = memo(function RootStack({ id }: { id: string }) {
  *   wheel            → scroll (Shift = sideways)
  *   Ctrl/⌘ + wheel   → zoom at the cursor (also trackpad pinch)
  *   drag background, middle mouse, or Space + drag → pan
+ *   two-finger pinch / pan (touch) → zoom + pan smoothly around finger midpoint
  * The view transform is applied straight to the DOM (no React re-render).
  */
 export function BlockWorkspace() {
+  const m = useMessages(programmingMessages);
   const viewport = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const view = useRef<View>({ ...HOME });
@@ -44,6 +54,11 @@ export function BlockWorkspace() {
   const rootIds = useProgramStore(useShallow((s) => s.program.roots.map((r) => r.id)));
   const onlyStart = useProgramStore((s) => s.program.blocks[START_ID]?.next === null && s.program.roots.length === 1);
   const spaceDown = useRef(false);
+
+  // Active touch pointers for pinch-zoom & two-finger pan, plus optional active 1-finger pan cleanup.
+  const touchPointers = useRef(new Map<number, Pt>());
+  const pinchState = useRef<{ dist: number; mid: Pt } | null>(null);
+  const cancelSinglePan = useRef<(() => void) | null>(null);
 
   const apply = useCallback(() => {
     const v = view.current;
@@ -126,6 +141,64 @@ export function BlockWorkspace() {
     return () => vp.removeEventListener('wheel', onWheel);
   }, [apply, zoomAt]);
 
+  // Global touch-pointer tracker for two-finger pinch-zoom & pan.
+  useEffect(() => {
+    const measure = () => {
+      const pts = [...touchPointers.current.values()];
+      if (pts.length < 2) return null;
+      const [a, b] = pts as [Pt, Pt];
+      return {
+        dist: Math.hypot(b.x - a.x, b.y - a.y),
+        mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+      };
+    };
+
+    const onMove = (ev: PointerEvent) => {
+      if (!touchPointers.current.has(ev.pointerId)) return;
+      touchPointers.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (touchPointers.current.size < 2) return;
+      const next = measure();
+      if (!next) return;
+      const prev = pinchState.current;
+      pinchState.current = next;
+      if (!prev) return;
+      const vp = viewport.current;
+      if (!vp) return;
+      const r = vp.getBoundingClientRect();
+      const v = view.current;
+      // Pan with the midpoint movement
+      v.x += next.mid.x - prev.mid.x;
+      v.y += next.mid.y - prev.mid.y;
+      // Pinch-zoom around the current midpoint
+      if (prev.dist > 10 && next.dist > 10) {
+        const factor = next.dist / prev.dist;
+        const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.zoom * factor));
+        const cx = next.mid.x - r.left;
+        const cy = next.mid.y - r.top;
+        v.x = cx - ((cx - v.x) / v.zoom) * zoom;
+        v.y = cy - ((cy - v.y) / v.zoom) * zoom;
+        v.zoom = zoom;
+        setZoomLabel(Math.round(zoom * 100));
+      }
+      apply();
+    };
+
+    const onEnd = (ev: PointerEvent) => {
+      if (!touchPointers.current.delete(ev.pointerId)) return;
+      if (touchPointers.current.size < 2) pinchState.current = null;
+      else pinchState.current = measure();
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onEnd);
+    window.addEventListener('pointercancel', onEnd);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onEnd);
+      window.removeEventListener('pointercancel', onEnd);
+    };
+  }, [apply]);
+
   // Space + drag pans (only while the pointer is over the workspace).
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -145,34 +218,66 @@ export function BlockWorkspace() {
     };
   }, []);
 
+  const onPointerDownCapture = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'touch') return;
+    touchPointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (touchPointers.current.size >= 2) {
+      // Transition cleanly from any single-finger drag/pan into two-finger pinch & pan.
+      cancelActiveDrag();
+      cancelSinglePan.current?.();
+      const pts = [...touchPointers.current.values()] as [Pt, Pt];
+      pinchState.current = {
+        dist: Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y),
+        mid: { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 },
+      };
+    }
+  };
+
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (touchPointers.current.size >= 2) return;
     const onBackground = e.target === viewport.current || e.target === content.current;
     const pan = e.button === 1 || (e.button === 0 && (onBackground || spaceDown.current));
     if (!pan) return;
     e.preventDefault();
+    const pointerId = e.pointerId;
     const start = { x: e.clientX, y: e.clientY, vx: view.current.x, vy: view.current.y };
     let moved = false;
     viewport.current?.classList.add('cursor-grabbing');
     const move = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
       if (Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 3) moved = true;
       view.current.x = start.vx + ev.clientX - start.x;
       view.current.y = start.vy + ev.clientY - start.y;
       apply();
     };
-    const up = () => {
+    const cleanup = (deselect: boolean) => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', cancel);
+      if (cancelSinglePan.current === abort) cancelSinglePan.current = null;
       viewport.current?.classList.remove('cursor-grabbing');
-      if (!moved && onBackground) useProgramStore.getState().select(null);
+      if (deselect && !moved && onBackground) useProgramStore.getState().select(null);
     };
+    const up = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
+      cleanup(true);
+    };
+    const cancel = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
+      cleanup(false);
+    };
+    const abort = () => cleanup(false);
+    cancelSinglePan.current = abort;
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', cancel);
   };
 
   return (
     <div className="relative min-h-0 flex-1 overflow-hidden rounded-[14px] border border-white/6 bg-[#0a1424]">
       <div
         ref={viewport}
+        onPointerDownCapture={onPointerDownCapture}
         onPointerDown={onPointerDown}
         className="absolute inset-0 cursor-default touch-none select-none"
         style={{ backgroundImage: 'radial-gradient(rgb(148 163 184 / 0.14) 1px, transparent 1.3px)' }}
@@ -186,10 +291,12 @@ export function BlockWorkspace() {
 
       {onlyStart && (
         <div className="pointer-events-none absolute inset-x-0 top-[118px] flex animate-fade-in items-center justify-center gap-3 px-4">
-          <ArrowLeft size={22} className="shrink-0 animate-nudge-left text-cyan/80" aria-hidden="true" />
-          <div className="max-w-[250px] rounded-[var(--radius-panel)] border border-dashed border-white/15 bg-white/[0.03] px-4 py-3 text-center text-[12.5px] leading-relaxed text-muted">
-            <div className="mb-0.5 font-semibold text-[#e2e8f0]">Drag a block here to start programming.</div>
-            Snap it under <span className="font-semibold text-[#fcd34d]">when program starts</span>.
+          <ArrowLeft size={22} className="hidden shrink-0 animate-nudge-left text-cyan/80 sm:block" aria-hidden="true" />
+          <div className="max-w-[260px] rounded-[var(--radius-panel)] border border-dashed border-white/15 bg-white/[0.03] px-4 py-3 text-center text-[12.5px] leading-relaxed text-muted">
+            <div className="mb-0.5 font-semibold text-[#e2e8f0]">{m.emptyWorkspaceTitle}</div>
+            {m.emptyWorkspaceSubPrefix}
+            <span className="font-semibold text-[#fcd34d]">{m.emptyWorkspaceStartName}</span>
+            {m.emptyWorkspaceSubSuffix}
           </div>
         </div>
       )}

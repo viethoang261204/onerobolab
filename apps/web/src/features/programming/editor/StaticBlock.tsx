@@ -1,12 +1,14 @@
 import { memo, type ReactNode } from 'react';
-import { getBlockDef } from '@robolab/blocks';
 import type { ArgDef, BlockFragment, BlockId } from '@robolab/blocks';
 import { chainIds } from '@robolab/blocks';
+import { useLocale } from '../../i18n/i18n';
+import { localizedArgLabel, localizedBlockDef } from '../blocks-vi';
 import { DropdownField, NumberField, TextField, VariableField } from './BlockFields';
 import { BlockVisual } from './BlockVisual';
 
 /** Read-only argument rendering (palette + drag preview). */
 function StaticArg({ fragment, id, name, arg }: { fragment: BlockFragment; id: BlockId; name: string; arg: ArgDef }): ReactNode {
+  const locale = useLocale();
   const block = fragment.blocks[id];
   if (!block) return null;
   const child = block.inputs[name];
@@ -21,7 +23,7 @@ function StaticArg({ fragment, id, name, arg }: { fragment: BlockFragment; id: B
         </span>
       );
     case 'dropdown':
-      return <DropdownField value={String(value ?? '')} options={arg.options} label={name} />;
+      return <DropdownField value={String(value ?? '')} options={arg.options} label={localizedArgLabel(name, locale)} />;
     case 'variable':
       return <VariableField value={String(value ?? '')} variables={[]} />;
     case 'boolean':
@@ -30,12 +32,13 @@ function StaticArg({ fragment, id, name, arg }: { fragment: BlockFragment; id: B
       return <TextField value={String(value ?? '')} label={arg.label} />;
     case 'dataKey':
     case 'functionName':
-      return <DropdownField value={String(value ?? '')} options={[]} label={name} />;
+      return <DropdownField value={String(value ?? '')} options={[]} label={localizedArgLabel(name, locale)} />;
   }
 }
 
 /** Renders a block (and its nested blocks / following stack) from a detached fragment. */
 export const StaticBlock = memo(function StaticBlock({ fragment, id, stack = false }: { fragment: BlockFragment; id: BlockId; stack?: boolean }) {
+  const locale = useLocale();
   const ids = stack ? chainIds(fragment.blocks, id) : [id];
   return (
     <div className="flex flex-col items-start">
@@ -52,7 +55,7 @@ export const StaticBlock = memo(function StaticBlock({ fragment, id, stack = fal
               const head = block.slots[slot.name];
               return head ? <StaticBlock fragment={fragment} id={head} stack /> : null;
             }}
-            {...(getBlockDef(block.type).shape !== 'reporter' && !!block.comment && {
+            {...(localizedBlockDef(block.type, locale).shape !== 'reporter' && !!block.comment && {
               comment: <span className="text-[11px] text-muted">💬 {block.comment}</span>,
             })}
           />

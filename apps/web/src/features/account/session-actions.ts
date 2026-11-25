@@ -1,4 +1,6 @@
 import { useCatalogStore } from '../catalog/catalog-store';
+import { messagesFor } from '../i18n/i18n';
+import { accountMessages } from './account.messages';
 import { resetRunSession } from '../levels/run-session';
 import { startProgramSync, stopProgramSync } from '../programming/state/program-sync';
 import { useRobotStore } from '../garage/state/robot-store';
@@ -8,7 +10,7 @@ import { studentApi } from './student-api';
 /** Valid credentials that belong to a staff account: students use OneRoboLab, staff the admin console. */
 export class StaffAccountError extends Error {
   constructor() {
-    super('This is a staff account. Please use the admin console.');
+    super(messagesFor(accountMessages).staffAccount);
     this.name = 'StaffAccountError';
   }
 }
@@ -52,7 +54,7 @@ export async function restoreSession(): Promise<void> {
     s.signedIn(s.token, user, s.remember);
   } catch (e) {
     // Offline: keep the token and try again later; anything else ends the session.
-    if ((e as { status?: number }).status === 0) useStudentSession.setState({ status: 'anonymous', notice: 'Can’t reach OneRoboLab right now. Check your connection and sign in again.' });
+    if ((e as { status?: number }).status === 0) useStudentSession.setState({ status: 'anonymous', notice: messagesFor(accountMessages).cantReachSignIn });
     else s.signedOut();
   }
 }

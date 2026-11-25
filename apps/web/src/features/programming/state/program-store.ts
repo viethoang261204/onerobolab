@@ -1,14 +1,17 @@
 import { create } from 'zustand';
 import { logToConsole } from '../../../stores/console-store';
 import * as M from '@robolab/blocks';
-import { blockName, getBlockDef } from '@robolab/blocks';
+import { getBlockDef } from '@robolab/blocks';
 import type { BlockFragment, BlockId, BlockType, DropTarget, FieldValue, ProgramState } from '@robolab/blocks';
 import { cloneFragment, createBlock, extractFragment, fragmentFromBlock } from '@robolab/blocks';
 import { validateProgram, type BlockIssue } from '@robolab/blocks';
 import { migrateLevelId } from '../../../content/levels/registry';
+import { messagesFor } from '../../i18n/i18n';
 import { browserStorage, readJson, type KeyValueStorage } from '../../persistence/storage';
 import { createStarterProgram } from '@robolab/blocks';
 import { parseProgram, serializeProgram } from '@robolab/blocks';
+import { localizedBlockName } from '../blocks-vi';
+import { localizeBlockIssue, programmingMessages } from '../programming.messages';
 import { clipboard } from './clipboard';
 import { emptyHistory, record, redo, undo, type History } from './history';
 
@@ -167,7 +170,7 @@ export const useProgramStore = create<ProgramStore>()((set, get) => {
       return fn();
     } catch (e) {
       if (e instanceof M.InvalidOperation) {
-        logToConsole('warn', e.message);
+        logToConsole('warn', localizeBlockIssue(e.message));
         return null;
       }
       throw e;
@@ -183,21 +186,27 @@ export const useProgramStore = create<ProgramStore>()((set, get) => {
 
     select: (id) => set({ selectedId: id }),
 
-    addBlock: (type, target) => get().addFragment(fragmentFromBlock(createBlock(type, get().program.variables)), target, `Block added: ${blockName(type)}.`),
+    addBlock: (type, target) =>
+      get().addFragment(
+        fragmentFromBlock(createBlock(type, get().program.variables)),
+        target,
+        messagesFor(programmingMessages).logBlockAdded({ label: localizedBlockName(type) }),
+      ),
 
     addFragment: (fragment, target, log) => {
       const next = attempt(() => M.insertFragment(get().program, fragment, target));
       if (!next) return null;
-      commit(next, { log: log ?? 'Blocks added.', select: fragment.rootId, snap: fragment.rootId });
+      commit(next, { log: log ?? messagesFor(programmingMessages).logBlocksAdded, select: fragment.rootId, snap: fragment.rootId });
       return fragment.rootId;
     },
 
     moveBlock: (id, target) => {
       const next = attempt(() => M.moveBlock(get().program, id, target));
       if (!next) return false;
-      const label = blockName(get().program.blocks[id]?.type ?? 'motion.stop');
-      const verb = target.kind === 'workspace' ? 'moved' : target.kind === 'slot' ? 'nested' : 'connected';
-      commit(next, { log: `Block ${verb}: ${label}.`, select: id, snap: id });
+      const m = messagesFor(programmingMessages);
+      const label = localizedBlockName(get().program.blocks[id]?.type ?? 'motion.stop');
+      const log = target.kind === 'workspace' ? m.logBlockMoved({ label }) : target.kind === 'slot' ? m.logBlockNested({ label }) : m.logBlockConnected({ label });
+      commit(next, { log, select: id, snap: id });
       return true;
     },
 
@@ -208,14 +217,14 @@ export const useProgramStore = create<ProgramStore>()((set, get) => {
       if (!block) return false;
       const next = attempt(() => M.deleteBlock(get().program, id));
       if (!next) return false;
-      commit(next, { log: `Block deleted: ${blockName(block.type)}.`, select: null });
+      commit(next, { log: messagesFor(programmingMessages).logBlockDeleted({ label: localizedBlockName(block.type) }), select: null });
       return true;
     },
 
     duplicateBlock: (id) => {
       const result = attempt(() => M.duplicateBlock(get().program, id));
       if (!result) return null;
-      commit(result.program, { log: 'Block duplicated.', select: result.newId, snap: result.newId });
+      commit(result.program, { log: messagesFor(programmingMessages).logBlockDuplicated, select: result.newId, snap: result.newId });
       return result.newId;
     },
 
@@ -226,16 +235,17 @@ export const useProgramStore = create<ProgramStore>()((set, get) => {
     toggleDisabled: (id) => {
       const block = get().program.blocks[id];
       if (!block) return;
-      commit(M.setDisabled(get().program, id, !block.disabled), { log: block.disabled ? 'Block enabled.' : 'Block disabled — it will be skipped.' });
+      const m = messagesFor(programmingMessages);
+      commit(M.setDisabled(get().program, id, !block.disabled), { log: block.disabled ? m.logBlockEnabled : m.logBlockDisabled });
     },
 
-    addVariable: (name) => commit(M.addVariable(get().program, name), { log: `Variable created: ${name.trim()}.` }),
+    addVariable: (name) => commit(M.addVariable(get().program, name), { log: messagesFor(programmingMessages).logVariableCreated({ name: name.trim() }) }),
 
     copy: (id) => {
       const target = id ?? get().selectedId;
       if (!target || target === M.START_ID || !get().program.blocks[target]) return false;
       clipboard.set(extractFragment(get().program, target));
-      logToConsole('info', 'Block copied.');
+      logToConsole('info', messagesFor(programmingMessages).logBlockCopied);
       return true;
     },
 
@@ -253,7 +263,7 @@ export const useProgramStore = create<ProgramStore>()((set, get) => {
         stackable && selected && M.checkDrop(program, copy.blocks, copy.rootId, { kind: 'after', blockId: selected.id }).ok
           ? { kind: 'after', blockId: selected.id }
           : { kind: 'workspace', x: 300 + (snapSeq % 5) * 20, y: 40 + (snapSeq % 5) * 20 };
-      return get().addFragment(copy, target, 'Block pasted.');
+      return get().addFragment(copy, target, messagesFor(programmingMessages).logBlockPasted);
     },
 
     undo: () => {
@@ -261,7 +271,7 @@ export const useProgramStore = create<ProgramStore>()((set, get) => {
       if (!r) return;
       set({ program: r.state, history: r.history, ...derive(r.state), selectedId: null });
       scheduleSave(get().levelId, r.state);
-      logToConsole('info', 'Undo.');
+      logToConsole('info', messagesFor(programmingMessages).logUndo);
     },
 
     redo: () => {
@@ -269,10 +279,10 @@ export const useProgramStore = create<ProgramStore>()((set, get) => {
       if (!r) return;
       set({ program: r.state, history: r.history, ...derive(r.state), selectedId: null });
       scheduleSave(get().levelId, r.state);
-      logToConsole('info', 'Redo.');
+      logToConsole('info', messagesFor(programmingMessages).logRedo);
     },
 
-    resetProgram: () => commit(createStarterProgram(), { log: 'Program cleared — only “when program starts” is left.', select: null }),
+    resetProgram: () => commit(createStarterProgram(), { log: messagesFor(programmingMessages).logProgramCleared, select: null }),
 
     replaceProgram: (program) => commit(program, { coalesceKey: 'python', select: null }),
 

@@ -1,5 +1,7 @@
 import { LevelRegistry } from '../../content/levels/registry';
 import { WorldRegistry } from '../../content/worlds/registry';
+import { messagesFor } from '../i18n/i18n';
+import { levelsMessages } from './levels.messages';
 import type { ProgressData, UnlockRequirement } from './progress';
 
 /*
@@ -9,7 +11,7 @@ import type { ProgressData, UnlockRequirement } from './progress';
  * requirements not met yet); in local mode it's "finish the previous one".
  */
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const m = () => messagesFor(levelsMessages);
 
 function met(r: UnlockRequirement, progress: ProgressData): boolean {
   const stats = progress.server?.stats;
@@ -36,17 +38,17 @@ function describe(r: UnlockRequirement, progress: ProgressData): string {
   const stats = progress.server?.stats;
   switch (r.type) {
     case 'LEVEL_COMPLETED':
-      return `complete ${r.levelTitle ?? r.levelSlug ?? 'the previous mission'}`;
+      return m().reqLevelCompleted({ name: r.levelTitle ?? r.levelSlug ?? null });
     case 'LEVEL_STARS':
-      return `earn ${r.stars ?? 0} ★ on ${r.levelTitle ?? r.levelSlug ?? 'a mission'}`;
+      return m().reqLevelStars({ stars: r.stars ?? 0, name: r.levelTitle ?? r.levelSlug ?? null });
     case 'WORLD_COMPLETED':
-      return `finish every mission in ${r.worldName ?? 'the previous world'}`;
+      return m().reqWorldCompleted({ name: r.worldName ?? null });
     case 'TOTAL_STARS':
-      return `collect ${r.stars ?? 0} stars (you have ${stats?.stars ?? 0})`;
+      return m().reqTotalStars({ stars: r.stars ?? 0, have: stats?.stars ?? 0 });
     case 'TOTAL_XP':
-      return `reach ${r.xp ?? 0} XP (you have ${stats?.xp ?? 0})`;
+      return m().reqTotalXp({ xp: r.xp ?? 0, have: stats?.xp ?? 0 });
     case 'ACHIEVEMENT':
-      return `earn the “${r.achievementName ?? 'special'}” achievement`;
+      return m().reqAchievement({ name: r.achievementName ?? null });
   }
 }
 
@@ -55,20 +57,20 @@ export function lockMessage(levelId: string, progress: ProgressData): string | n
   const state = progress.server?.states[levelId];
   if (progress.server) {
     if (!state || state.status !== 'locked') return null;
-    if (state.lockReason === 'LOCKED_BY_ADMIN') return 'This mission isn’t open yet. Your teacher will unlock it.';
-    if (state.lockReason === 'ADMIN_OVERRIDE') return 'Your teacher has locked this mission for now.';
+    if (state.lockReason === 'LOCKED_BY_ADMIN') return m().lockNotOpen;
+    if (state.lockReason === 'ADMIN_OVERRIDE') return m().lockByTeacher;
     // The rule group closest to done decides the message (groups are alternatives).
     const options = state.unlock
       .map((g) => g.requirements.filter((r) => !met(r, progress)))
       .filter((unmet) => unmet.length > 0)
       .sort((a, b) => a.length - b.length);
     const best = options[0];
-    if (!best) return 'Keep going — this mission unlocks soon.';
-    return `${cap(best.map((r) => describe(r, progress)).join(' and '))} to unlock this mission.`;
+    if (!best) return m().lockSoon;
+    return m().unlockSentence({ parts: best.map((r) => describe(r, progress)) });
   }
   // Local mode: missions unlock in order.
   const i = LevelRegistry.indexOf(levelId);
   const prev = i > 0 ? LevelRegistry.all[i - 1] : undefined;
   if (!prev || progress.levels[prev.id]?.completed || progress.levels[levelId]?.completed) return null;
-  return `Complete ${prev.title} to unlock this mission.`;
+  return m().lockPrevious({ title: prev.title });
 }

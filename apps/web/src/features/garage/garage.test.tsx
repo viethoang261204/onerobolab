@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { setLocale } from '../i18n/i18n';
 import type { ProgressData } from '../levels/progress';
 import { memoryStorage } from '../persistence/storage';
 import { parseRoute, paths } from '../router/routes';
@@ -193,5 +194,23 @@ describe('garage page', () => {
     expect(html('decals')).toContain('Left side');
     expect(html('accessories')).toContain('Lava Shield — locked. Reach World 6 · Lava Core');
     expect(html('animations')).toContain('Victory');
+  });
+
+  it('Vietnamese locale translates garage controls, catalog display names and unlock hints', () => {
+    setLocale('vi');
+    try {
+      const ctx = unlockContext(EMPTY);
+      const html = (c: GarageCategory) => render(<CustomizationPanel ctx={ctx} category={c} />);
+      expect(html('robot')).toContain('Mẫu robot');
+      expect(html('robot')).toContain('Tank — đã khoá. Đến Thế giới 2 · Canyon Circuit');
+      expect(html('paint')).toContain('Sơn màu · Thân');
+      expect(html('paint')).toContain('Trắng + Xanh ngọc');
+      expect(html('patterns')).toContain('Sợi carbon');
+      expect(html('decals')).toContain('Bên trái');
+      expect(html('accessories')).toContain('Khiên dung nham — đã khoá. Đến Thế giới 6 · Lava Core');
+      expect(html('animations')).toContain('Chiến thắng');
+    } finally {
+      setLocale('en');
+    }
   });
 });

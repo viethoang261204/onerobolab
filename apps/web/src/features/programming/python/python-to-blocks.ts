@@ -2,6 +2,8 @@ import { START_ID } from '@robolab/blocks';
 import type { BlockId, BlockInstance, BlockType, ProgramState, RootPlacement } from '@robolab/blocks';
 import { createBlock } from '@robolab/blocks';
 import { FUNCTION_NAME } from '@robolab/blocks';
+import { messagesFor } from '../../i18n/i18n';
+import { pythonErrorMessages } from '../programming.messages';
 import { parse, PythonError, type Expr, type Stmt } from './python-parser';
 
 /*
@@ -104,11 +106,12 @@ export function pythonToBlocks(source: string, previous?: ProgramState): PythonR
 }
 
 function build(stmts: readonly Stmt[], previous?: ProgramState): { program: ProgramState; lineOf: Map<BlockId, number> } {
+  const err = messagesFor(pythonErrorMessages);
   const blocks: Record<BlockId, Draft> = {};
   const lineOf = new Map<BlockId, number>();
   const variables: string[] = [...(previous?.variables ?? [])];
   const useVar = (name: string, line: number) => {
-    if (name === 'robot' || name === 'mission' || name === 'random') fail(`“${name}” is a module — use it like ${name}.something.`, line);
+    if (name === 'robot' || name === 'mission' || name === 'random') fail(err.moduleAsVar({ name }), line);
     if (!variables.includes(name)) variables.push(name);
     return name;
   };
@@ -135,7 +138,7 @@ function build(stmts: readonly Stmt[], previous?: ProgramState): { program: Prog
   const numberBlock = (e: Expr): BlockId => {
     switch (e.k) {
       case 'name': {
-        if (defs.has(e.v)) fail(`“${e.v}” is a function — run it on its own line: ${e.v}()`, e.line);
+        if (defs.has(e.v)) fail(err.fnAsValue({ name: e.v }), e.line);
         const b = make('variable.get', e.line);
         b.fields.name = useVar(e.v, e.line);
         return b.id;
@@ -146,29 +149,29 @@ function build(stmts: readonly Stmt[], previous?: ProgramState): { program: Prog
           b.fields.key = e.name;
           return b.id;
         }
-        if (e.obj.k === 'name' && e.obj.v === 'robot') return fail(`Add brackets to read the robot: robot.${e.name}()`, e.line);
-        return fail('Only mission.<name> values can be read this way.', e.line);
+        if (e.obj.k === 'name' && e.obj.v === 'robot') return fail(err.addRobotBrackets({ name: e.name }), e.line);
+        return fail(err.onlyMissionAttr, e.line);
       case 'call': {
         const rc = robotCall(e);
         if (rc) {
           const type = NUMBER_SENSORS[rc.name];
           if (type) {
-            if (rc.args.length) fail(`robot.${rc.name}() takes no inputs.`, e.line);
+            if (rc.args.length) fail(err.robotTakesNoInputs({ name: rc.name }), e.line);
             return make(type, e.line).id;
           }
-          if (rc.name === 'color') return fail('robot.color() is a colour, not a number — compare it: robot.color() == "red"', e.line);
-          if (BOOL_SENSORS[rc.name]) return fail(`robot.${rc.name}() is a yes/no answer, not a number.`, e.line);
-          return fail(`robot.${rc.name}() doesn’t give a number.`, e.line);
+          if (rc.name === 'color') return fail(err.colorNotNumber, e.line);
+          if (BOOL_SENSORS[rc.name]) return fail(err.boolNotNumber({ name: rc.name }), e.line);
+          return fail(err.notANumber({ name: rc.name }), e.line);
         }
         if (e.fn.k === 'attr' && e.fn.obj.k === 'name' && e.fn.obj.v === 'random' && e.fn.name === 'randint') {
-          if (e.args.length !== 2) fail('random.randint needs two numbers: random.randint(1, 6)', e.line);
+          if (e.args.length !== 2) fail(err.randintTwoNumbers, e.line);
           const b = make('math.random', e.line);
           setNum(b, 'from', e.args[0]!);
           setNum(b, 'to', e.args[1]!);
           return b.id;
         }
-        if (e.fn.k === 'name' && defs.has(e.fn.v)) return fail(`Functions don’t give back a value — run ${e.fn.v}() on its own line.`, e.line);
-        return fail('This doesn’t give a number.', e.line);
+        if (e.fn.k === 'name' && defs.has(e.fn.v)) return fail(err.fnNoReturnVal({ name: e.fn.v }), e.line);
+        return fail(err.exprNotNumber, e.line);
       }
       case 'bin': {
         const type: BlockType = e.op === '+' ? 'math.add' : e.op === '-' ? 'math.subtract' : e.op === '*' ? 'math.multiply' : 'math.divide';
@@ -184,9 +187,9 @@ function build(stmts: readonly Stmt[], previous?: ProgramState): { program: Prog
         return b.id;
       }
       case 'str':
-        return fail(`“${e.v}” is text — a number is needed here.`, e.line);
+        return fail(err.textNotNumber({ text: e.v }), e.line);
       default:
-        return fail('A number is needed here, not a yes/no answer.', e.line);
+        return fail(err.needNumberNotBool, e.line);
     }
   };
 
@@ -196,16 +199,16 @@ function build(stmts: readonly Stmt[], previous?: ProgramState): { program: Prog
         const rc = robotCall(e);
         const type = rc ? BOOL_SENSORS[rc.name] : undefined;
         if (rc && type) {
-          if (rc.args.length) fail(`robot.${rc.name}() takes no inputs.`, e.line);
+          if (rc.args.length) fail(err.robotTakesNoInputs({ name: rc.name }), e.line);
           return make(type, e.line).id;
         }
-        return fail('This isn’t a yes/no question. Compare it, e.g. robot.distance() < 30', e.line);
+        return fail(err.notYesNo, e.line);
       }
       case 'cmp': {
         const colorSide = isColorRead(e.l) ? e.r : isColorRead(e.r) ? e.l : null;
         if (colorSide) {
-          if (colorSide.k !== 'str' || !COLORS.has(colorSide.v)) fail('Compare the colour with a colour name, e.g. robot.color() == "red"', e.line);
-          if (e.op !== '==' && e.op !== '!=') fail('Colours can only be compared with == or !=.', e.line);
+          if (colorSide.k !== 'str' || !COLORS.has(colorSide.v)) fail(err.compareColorName, e.line);
+          if (e.op !== '==' && e.op !== '!=') fail(err.colorEqOnly, e.line);
           const c = make('sensor.color', e.line);
           c.fields.color = (colorSide as { v: string }).v;
           if (e.op === '==') return c.id;
@@ -231,11 +234,11 @@ function build(stmts: readonly Stmt[], previous?: ProgramState): { program: Prog
         return b.id;
       }
       case 'bool':
-        return fail(e.v ? 'Use “while True:” for a loop that never ends; an “if” needs a real question.' : 'This condition is never true.', e.line);
+        return fail(e.v ? err.whileTrueHint : err.neverTrue, e.line);
       case 'name':
-        return fail(`“${e.v}” is a number. Ask a question about it, e.g. ${e.v} > 0`, e.line);
+        return fail(err.varNeedsQuestion({ name: e.v }), e.line);
       default:
-        return fail('A yes/no question is needed here, e.g. robot.distance() < 30', e.line);
+        return fail(err.needYesNo, e.line);
     }
   };
 
@@ -257,11 +260,11 @@ function build(stmts: readonly Stmt[], previous?: ProgramState): { program: Prog
       case 'pass':
         return null;
       case 'break': {
-        if (!inLoop) fail('“break” only works inside a loop.', s.line);
+        if (!inLoop) fail(err.breakOutsideLoop, s.line);
         return make('control.break', s.line, comment).id;
       }
       case 'def':
-        return fail('Define functions at the top level, not inside other code.', s.line);
+        return fail(err.defTopLevel, s.line);
       case 'assign': {
         const name = useVar(s.name, s.line);
         if (s.op === '=') {
@@ -286,22 +289,22 @@ function build(stmts: readonly Stmt[], previous?: ProgramState): { program: Prog
         const e = s.e;
         if (e.k === 'call' && e.fn.k === 'name') {
           if (!defs.has(e.fn.v)) {
-            if (e.fn.v === 'print') fail('print() isn’t available — the console shows what the robot does.', s.line);
-            fail(`There is no function called “${e.fn.v}”. Define it first: def ${e.fn.v}():`, s.line);
+            if (e.fn.v === 'print') fail(err.noPrint, s.line);
+            fail(err.noSuchFunction({ name: e.fn.v }), s.line);
           }
-          if (e.args.length) fail('Functions here don’t take inputs — use variables instead.', s.line);
+          if (e.args.length) fail(err.fnCallNoArgs, s.line);
           const b = make('function.call', s.line, comment);
           b.fields.name = e.fn.v;
           return b.id;
         }
         const rc = robotCall(e);
-        if (!rc) return fail('This line doesn’t do anything — call a robot action, e.g. robot.move_forward(20)', s.line);
+        if (!rc) return fail(err.lineDoesNothing, s.line);
         const action = ACTIONS[rc.name];
         if (!action) {
-          if (NUMBER_SENSORS[rc.name] || BOOL_SENSORS[rc.name] || rc.name === 'color') fail(`robot.${rc.name}() only reads a sensor — use it in an if, a while or a variable.`, s.line);
-          fail(`The robot has no action called “${rc.name}”.`, s.line);
+          if (NUMBER_SENSORS[rc.name] || BOOL_SENSORS[rc.name] || rc.name === 'color') fail(err.sensorOnlyReads({ name: rc.name }), s.line);
+          fail(err.noSuchAction({ name: rc.name }), s.line);
         }
-        if (rc.args.length !== action!.args.length) fail(`robot.${rc.name}() needs ${action!.args.length === 0 ? 'no inputs' : `${action!.args.length} input${action!.args.length > 1 ? 's' : ''}`}.`, s.line);
+        if (rc.args.length !== action!.args.length) fail(err.actionWrongArgs({ name: rc.name, count: action!.args.length }), s.line);
         const b = make(action!.type, s.line, comment);
         action!.args.forEach((arg, k) => setNum(b, arg, rc.args[k]!));
         return b.id;
@@ -334,7 +337,7 @@ function build(stmts: readonly Stmt[], previous?: ProgramState): { program: Prog
       case 'for': {
         if (s.varName !== '_') {
           const used = usesName(s.body, s.varName);
-          if (used !== null) fail(`The loop counter “${s.varName}” can’t be used inside the loop — make your own variable and add 1 to it.`, used);
+          if (used !== null) fail(err.loopCounterUsed({ name: s.varName }), used);
         }
         const b = make('control.repeat', s.line, comment);
         setNum(b, 'count', s.count);
@@ -354,8 +357,8 @@ function build(stmts: readonly Stmt[], previous?: ProgramState): { program: Prog
   let y = startPos.y;
   for (const s of stmts) {
     if (s.k !== 'def') continue;
-    if (!FUNCTION_NAME.test(s.name)) fail('Function names use letters, digits and _ and start with a letter.', s.line);
-    if (roots.some((r) => blocks[r.id]?.type === 'function.define' && blocks[r.id]?.fields.name === s.name)) fail(`There are two functions called “${s.name}”.`, s.line);
+    if (!FUNCTION_NAME.test(s.name)) fail(err.badFunctionName, s.line);
+    if (roots.some((r) => blocks[r.id]?.type === 'function.define' && blocks[r.id]?.fields.name === s.name)) fail(err.duplicateFunction({ name: s.name }), s.line);
     const d = make('function.define', s.line, s.comment);
     d.fields.name = s.name;
     d.next = chain(s.body, false);

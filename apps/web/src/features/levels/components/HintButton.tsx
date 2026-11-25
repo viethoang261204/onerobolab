@@ -1,13 +1,16 @@
 import { ChevronRight, Lightbulb, Loader2 } from 'lucide-react';
 import type { LevelDefinition } from '../../../content/levels/types';
 import { cn } from '../../../utils/cn';
+import { useMessages } from '../../i18n/i18n';
 import { useLevelStore } from '../level-store';
+import { levelsMessages } from '../levels.messages';
 
 /**
  * "Need a hint?" — reveals the next hint. A paid hint says what it costs;
  * unlocking it charges the XP on the server (once) and brings its text.
  */
 export function HintButton({ level, first, next, className }: { level: LevelDefinition; first: string; next: string; className?: string }) {
+  const m = useMessages(levelsMessages);
   const hintsShown = useLevelStore((s) => s.hintsShown);
   const busy = useLevelStore((s) => s.hintBusy);
   const error = useLevelStore((s) => s.hintError);
@@ -17,9 +20,9 @@ export function HintButton({ level, first, next, className }: { level: LevelDefi
   const cost = info && !info.revealed && info.cost > 0 ? info.cost : 0;
   return (
     <div>
-      <button type="button" onClick={reveal} disabled={busy} className={cn('flex items-center gap-1.5 text-[12.5px] font-semibold text-[#fbbf24] disabled:opacity-60', className)}>
+      <button type="button" onClick={reveal} disabled={busy} className={cn('flex min-h-9 items-center gap-1.5 text-[12.5px] pointer-coarse:min-h-11 font-semibold text-[#fbbf24] disabled:opacity-60', className)}>
         {busy ? <Loader2 size={14} className="animate-spin" /> : <Lightbulb size={14} />}
-        {cost ? `Unlock hint ${hintsShown + 1} · ${cost} XP` : hintsShown === 0 ? first : next}
+        {cost ? m.hintUnlock({ n: hintsShown + 1, cost }) : hintsShown === 0 ? first : next}
         <ChevronRight size={14} />
       </button>
       {error && (

@@ -1,0 +1,171 @@
+import { defineMessages } from '../i18n/i18n';
+
+/** Robot Garage (`/robots`) UI: categories, toolbar, panels, unlocks and confirm dialogs. */
+export const garageMessages = defineMessages({
+  en: {
+    // Page & canvas
+    garageAria: 'Robot garage',
+    garageErrorTitle: 'The garage could not be shown',
+    loadingGarage: 'Loading the garage',
+    canvasAria: 'Your robot in the garage. Drag to rotate, scroll to zoom, double-click to reset the view.',
+    customiseNavAria: 'Customise',
+    title: 'Robot Garage',
+    subtitle: 'Make your robot yours.',
+    unsavedChanges: 'unsaved changes',
+    customisationAsideAria: 'Customisation',
+
+    // Categories
+    catRobot: 'Robot',
+    catRobotHint: 'Model, wheels & name',
+    catPaint: 'Paint',
+    catPaintHint: 'Colour each part',
+    catPatterns: 'Patterns',
+    catPatternsHint: 'Stripes, camo, carbon…',
+    catDecals: 'Decals',
+    catDecalsHint: 'Stickers & symbols',
+    catAccessories: 'Accessories',
+    catAccessoriesHint: 'Extra parts',
+    catAnimations: 'Animations',
+    catAnimationsHint: 'Idle & moves',
+
+    // Actions & toolbar
+    reset: 'Reset',
+    saved: 'Saved',
+    saveRobot: 'Save Robot',
+    undoAria: 'Undo (Ctrl+Z)',
+    redoAria: 'Redo (Ctrl+Shift+Z)',
+    yourRobotsAria: 'Your robots',
+    slotTitleActive: (p: { name: string }) => `${p.name} (your robot)`,
+    newRobot: 'New robot',
+    newRobotName: (p: { n: number }) => `Robot ${p.n}`,
+    activeBadge: 'YOU',
+    autoRotate: 'Auto-rotate',
+    resetView: 'Reset view (or double-click)',
+
+    // Confirm dialogs
+    cancel: 'Cancel',
+    confirmResetTitle: 'Reset this robot?',
+    confirmResetBody: 'It goes back to the default rover. Your saved robot stays as it is until you press Save Robot — and you can undo.',
+    confirmResetAction: 'Reset',
+    confirmSwitchTitle: 'Discard unsaved changes?',
+    confirmSwitchBody: 'You changed this robot without saving. Switching robots will lose those changes.',
+    confirmSwitchAction: 'Discard',
+
+    // CustomizationPanel sections
+    sectionModel: 'Robot model',
+    sectionName: 'Name',
+    robotNameAria: 'Robot name',
+    sectionPart: 'Part',
+    sectionPaintPart: (p: { part: string }) => `Paint · ${p.part}`,
+    sectionPatternPart: (p: { part: string }) => `Pattern · ${p.part}`,
+    sectionDecals: 'Decals',
+    upTo3: 'Up to 3',
+    sectionAccessories: 'Accessories',
+    fittedCount: (p: { n: number }) => `${p.n} fitted`,
+    accessoriesUnlockNote: 'Some parts unlock as you travel through the worlds.',
+    sectionAnimation: 'Animation',
+
+    // Selectors
+    tileLockedAria: (p: { label: string; hint: string }) => `${p.label} — locked. ${p.hint}`,
+    robotPartAria: 'Robot part',
+    colourAria: 'Colour',
+    customColourAria: 'Custom colour',
+    customLabel: 'Custom',
+    apply: 'Apply',
+    decalPositionAria: 'Decal position',
+    hasDecalAria: 'has a decal',
+    none: 'None',
+    decalColourGroupAria: 'Decal colour',
+    decalColourItemAria: (p: { name: string }) => `Decal colour ${p.name}`,
+    numberLabel: 'Number',
+    initialsLabel: 'Initials',
+
+    // Unlock hints
+    unlockAvailable: 'Available',
+    unlockWorld: (p: { world: number; name?: string }) => `Reach World ${p.world}${p.name ? ` · ${p.name}` : ''}`,
+    unlockMissions: (p: { count: number; done: number }) => `Complete ${p.count} missions (${p.done}/${p.count})`,
+  },
+  vi: {
+    // Page & canvas
+    garageAria: 'Xưởng Robot',
+    garageErrorTitle: 'Không thể hiển thị Xưởng Robot',
+    loadingGarage: 'Đang tải Xưởng Robot',
+    canvasAria: 'Robot trong Xưởng Robot. Kéo để xoay, cuộn hoặc chụm để phóng to/nhỏ, nhấp đúp để đặt lại góc nhìn.',
+    customiseNavAria: 'Tuỳ chỉnh',
+    title: 'Xưởng Robot',
+    subtitle: 'Tạo nên robot mang phong cách riêng.',
+    unsavedChanges: 'chưa lưu',
+    customisationAsideAria: 'Bảng tuỳ chỉnh',
+
+    // Categories
+    catRobot: 'Robot',
+    catRobotHint: 'Mẫu, bánh xe & tên',
+    catPaint: 'Sơn màu',
+    catPaintHint: 'Tô màu từng phần',
+    catPatterns: 'Hoạ tiết',
+    catPatternsHint: 'Sọc, rằn ri, carbon…',
+    catDecals: 'Nhãn dán',
+    catDecalsHint: 'Hình dán & ký hiệu',
+    catAccessories: 'Phụ kiện',
+    catAccessoriesHint: 'Lắp thêm bộ phận',
+    catAnimations: 'Chuyển động',
+    catAnimationsHint: 'Đứng yên & hành động',
+
+    // Actions & toolbar
+    reset: 'Đặt lại',
+    saved: 'Đã lưu',
+    saveRobot: 'Lưu Robot',
+    undoAria: 'Hoàn tác (Ctrl+Z)',
+    redoAria: 'Làm lại (Ctrl+Shift+Z)',
+    yourRobotsAria: 'Các robot của em',
+    slotTitleActive: (p) => `${p.name} (đang chọn)`,
+    newRobot: 'Robot mới',
+    newRobotName: (p) => `Robot ${p.n}`,
+    activeBadge: 'CHÍNH',
+    autoRotate: 'Tự xoay',
+    resetView: 'Đặt lại góc nhìn (hoặc nhấp đúp)',
+
+    // Confirm dialogs
+    cancel: 'Huỷ',
+    confirmResetTitle: 'Đặt lại robot này?',
+    confirmResetBody: 'Robot sẽ trở về mẫu mặc định. Robot đã lưu vẫn giữ nguyên cho đến khi nhấn Lưu Robot — và có thể hoàn tác.',
+    confirmResetAction: 'Đặt lại',
+    confirmSwitchTitle: 'Bỏ các thay đổi chưa lưu?',
+    confirmSwitchBody: 'Robot này có thay đổi chưa được lưu. Chuyển sang robot khác sẽ làm mất các thay đổi đó.',
+    confirmSwitchAction: 'Bỏ thay đổi',
+
+    // CustomizationPanel sections
+    sectionModel: 'Mẫu robot',
+    sectionName: 'Tên robot',
+    robotNameAria: 'Tên robot',
+    sectionPart: 'Bộ phận',
+    sectionPaintPart: (p) => `Sơn màu · ${p.part}`,
+    sectionPatternPart: (p) => `Hoạ tiết · ${p.part}`,
+    sectionDecals: 'Nhãn dán',
+    upTo3: 'Tối đa 3',
+    sectionAccessories: 'Phụ kiện',
+    fittedCount: (p) => `Đã gắn ${p.n}`,
+    accessoriesUnlockNote: 'Một số phụ kiện sẽ mở khoá khi chinh phục các thế giới.',
+    sectionAnimation: 'Chuyển động',
+
+    // Selectors
+    tileLockedAria: (p) => `${p.label} — đã khoá. ${p.hint}`,
+    robotPartAria: 'Bộ phận robot',
+    colourAria: 'Màu sắc',
+    customColourAria: 'Màu tuỳ chọn',
+    customLabel: 'Tuỳ chọn',
+    apply: 'Áp dụng',
+    decalPositionAria: 'Vị trí dán',
+    hasDecalAria: 'đã có nhãn dán',
+    none: 'Không',
+    decalColourGroupAria: 'Màu nhãn dán',
+    decalColourItemAria: (p) => `Màu nhãn dán ${p.name}`,
+    numberLabel: 'Số',
+    initialsLabel: 'Chữ cái',
+
+    // Unlock hints
+    unlockAvailable: 'Có sẵn',
+    unlockWorld: (p) => `Đến Thế giới ${p.world}${p.name ? ` · ${p.name}` : ''}`,
+    unlockMissions: (p) => `Hoàn thành ${p.count} nhiệm vụ (${p.done}/${p.count})`,
+  },
+});

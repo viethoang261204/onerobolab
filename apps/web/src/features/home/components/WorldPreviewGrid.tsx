@@ -1,10 +1,12 @@
 import { ArrowRight, Hourglass, Lock } from 'lucide-react';
 import { cn } from '../../../utils/cn';
+import { formatNumber, useMessages } from '../../i18n/i18n';
+import { homeMessages } from '../home.messages';
 import { navigate } from '../../router/router-store';
 import { paths } from '../../router/routes';
 import { WorldArtwork } from '../../world-map/art/WorldArtwork';
 import { useWorldMapStore } from '../../world-map/world-map.store';
-import { currentWorld, isWorldOpen, WORLD_STATUS_LABEL, type WorldSummary } from '../../world-map/world-progress';
+import { currentWorld, isWorldOpen, type WorldSummary } from '../../world-map/world-progress';
 
 /** Opens the world map with this world selected. */
 const viewWorld = (id: string) => {
@@ -13,15 +15,17 @@ const viewWorld = (id: string) => {
 };
 
 function WorldPreviewCard({ summary, current }: { summary: WorldSummary; current: boolean }) {
+  const m = useMessages(homeMessages);
   const { world, status } = summary;
   const open = isWorldOpen(status);
   const soon = status === 'coming_soon';
+  const statusLabel = m[`status_${status}`];
   return (
     <li>
       <button
         type="button"
         onClick={() => viewWorld(world.id)}
-        aria-label={`World ${world.order}: ${world.name}. ${WORLD_STATUS_LABEL[status]}${current ? ', current world' : ''}. View on the world map`}
+        aria-label={m.worldCard({ order: world.order, name: world.name, status: statusLabel, current })}
         style={{ ['--world' as string]: world.color }}
         className={cn(
           'group relative flex h-full w-full flex-col overflow-hidden rounded-[20px] border bg-panel/90 text-left shadow-[var(--shadow-panel)] transition-[transform,border-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-out-soft)]',
@@ -43,7 +47,7 @@ function WorldPreviewCard({ summary, current }: { summary: WorldSummary; current
             {String(world.order).padStart(2, '0')}
           </span>
           {current && (
-            <span className="absolute right-2.5 top-2.5 rounded-[7px] bg-[#0b1426]/85 px-1.5 py-px text-[10px] font-black uppercase tracking-[0.12em] text-[var(--world)]">Current</span>
+            <span className="absolute right-2.5 top-2.5 rounded-[7px] bg-[#0b1426]/85 px-1.5 py-px text-[10px] font-black uppercase tracking-[0.12em] text-[var(--world)]">{m.current}</span>
           )}
         </div>
         <div className="flex flex-1 flex-col px-3.5 pb-3 pt-2.5">
@@ -56,12 +60,12 @@ function WorldPreviewCard({ summary, current }: { summary: WorldSummary; current
                   <div className="h-full rounded-full bg-[var(--world)]" style={{ width: `${summary.fraction * 100}%` }} />
                 </div>
                 <span className="tabular text-[11.5px] font-semibold text-[#cbd5e1]">
-                  {summary.completed}/{summary.total}
+                  {formatNumber(summary.completed)}/{formatNumber(summary.total)}
                 </span>
               </div>
             ) : (
               <span className="flex items-center gap-1 text-[11.5px] font-medium text-[#8b98b3]">
-                {soon ? <Hourglass size={11} /> : <Lock size={11} />} {WORLD_STATUS_LABEL[status]}
+                {soon ? <Hourglass size={11} /> : <Lock size={11} />} {statusLabel}
               </span>
             )}
           </div>
@@ -73,21 +77,22 @@ function WorldPreviewCard({ summary, current }: { summary: WorldSummary; current
 
 /** "Explore OneRoboLab": every world with its miniature, progress and lock state. */
 export function WorldPreviewGrid({ summaries }: { summaries: readonly WorldSummary[] }) {
+  const m = useMessages(homeMessages);
   const currentId = summaries.length ? currentWorld(summaries).world.id : null;
   return (
     <section aria-labelledby="worlds-title">
-      <div className="mb-3 flex items-end justify-between">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
         <div>
           <h2 id="worlds-title" className="font-display text-[24px] font-black text-white">
-            Explore OneRoboLab
+            {m.exploreTitle}
           </h2>
-          <p className="text-[13.5px] text-muted">Six worlds, each teaching a new robotics skill.</p>
+          <p className="text-[13.5px] text-muted">{m.exploreSub}</p>
         </div>
-        <button type="button" onClick={() => navigate(paths.worldMap())} className="group flex items-center gap-1.5 rounded-[var(--radius-chip)] px-2 py-1 text-[14px] font-semibold text-cyan hover:bg-cyan/10">
-          View World Map <ArrowRight size={16} className="transition-transform duration-[var(--dur-fast)] group-hover:translate-x-0.5" />
+        <button type="button" onClick={() => navigate(paths.worldMap())} className="group flex min-h-11 items-center gap-1.5 rounded-[var(--radius-chip)] px-2 py-1 text-[14px] font-semibold text-cyan hover:bg-cyan/10">
+          {m.viewWorldMap} <ArrowRight size={16} className="transition-transform duration-[var(--dur-fast)] group-hover:translate-x-0.5" />
         </button>
       </div>
-      <ul className="grid grid-cols-6 gap-3 max-[1280px]:grid-cols-3">
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {summaries.map((s) => (
           <WorldPreviewCard key={s.world.id} summary={s} current={s.world.id === currentId} />
         ))}

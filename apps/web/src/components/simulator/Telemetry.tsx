@@ -1,22 +1,26 @@
 import { Activity, ChevronDown, ChevronUp, Compass, Palette, Radar, Timer } from 'lucide-react';
 import { useState } from 'react';
 import { blockName } from '@robolab/blocks';
+import { useMessages } from '../../features/i18n/i18n';
 import { useProgramStore } from '../../features/programming/state/program-store';
+import { colorName } from '../../features/simulator/runtime/describe';
 import { useRuntimeStore } from '../../features/simulator/runtime/runtime-store';
 import { useSimulationStore } from '../../stores/simulation-store';
 import type { SimStatus } from '../../types/ui';
 import { cn } from '../../utils/cn';
+import { simulatorMessages } from './simulator.messages';
 
-const STATUS: Record<SimStatus, { label: string; tone: string }> = {
-  idle: { label: 'Ready', tone: 'bg-white/40' },
-  running: { label: 'Running', tone: 'bg-success animate-pulse' },
-  stopped: { label: 'Stopped', tone: 'bg-warning' },
-  finished: { label: 'Finished', tone: 'bg-cyan' },
-  error: { label: 'Stopped — problem', tone: 'bg-danger' },
+const STATUS_TONE: Record<SimStatus, string> = {
+  idle: 'bg-white/40',
+  running: 'bg-success animate-pulse',
+  stopped: 'bg-warning',
+  finished: 'bg-cyan',
+  error: 'bg-danger',
 };
 
-/** Compact robot status (bottom-left): run state, current block, time, heading, sensors. */
+/** Compact robot status (bottom-left, desktop only): run state, current block, time, heading, sensors. */
 export function Telemetry() {
+  const m = useMessages(simulatorMessages);
   const [open, setOpen] = useState(true);
   const status = useSimulationStore((s) => s.status);
   const time = useRuntimeStore((s) => s.time);
@@ -25,23 +29,24 @@ export function Telemetry() {
   const active = useRuntimeStore((s) => s.activeBlockId);
   const activeType = useProgramStore((s) => (active ? s.program.blocks[active]?.type : undefined));
   const deg = Math.round((((pose.heading * 180) / Math.PI) % 360 + 360) % 360);
+  const statusLabel = { idle: m.statusReady, running: m.statusRunning, stopped: m.statusStopped, finished: m.statusFinished, error: m.statusError }[status];
   const items = [
-    { icon: Timer, label: 'Time', value: `${time.toFixed(1)} s` },
-    { icon: Compass, label: 'Heading', value: `${deg}°` },
-    { icon: Radar, label: 'Distance', value: sensors.distance === null ? '—' : `${Math.round(sensors.distance * 100)} cm`, warn: sensors.obstacle },
-    { icon: Palette, label: 'Floor', value: sensors.line ? 'line' : sensors.color === 'none' ? '—' : sensors.color },
+    { icon: Timer, label: m.time, value: `${time.toFixed(1)} s` },
+    { icon: Compass, label: m.heading, value: `${deg}°` },
+    { icon: Radar, label: m.distance, value: sensors.distance === null ? '—' : `${Math.round(sensors.distance * 100)} cm`, warn: sensors.obstacle },
+    { icon: Palette, label: m.floor, value: sensors.line ? m.floorLine : sensors.color === 'none' ? '—' : colorName(sensors.color) },
   ];
   return (
-    <section aria-label="Robot status" className="glass w-[300px] rounded-[var(--radius-panel)] px-3.5 py-2.5">
+    <section aria-label={m.robotStatus} className="glass w-[300px] rounded-[var(--radius-panel)] px-3.5 py-2.5">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-label={open ? 'Collapse robot status' : 'Expand robot status'}
+        aria-label={open ? m.collapseStatus : m.expandStatus}
         className="flex w-full items-center justify-between text-left"
       >
         <span className="flex items-center gap-2 text-[13px] font-semibold text-white">
-          <span className={cn('h-2 w-2 rounded-full', STATUS[status].tone)} /> Rover · {STATUS[status].label}
+          <span className={cn('h-2 w-2 rounded-full', STATUS_TONE[status])} /> {m.rover} · {statusLabel}
         </span>
         <span className="flex items-center gap-1.5 text-muted">
           <Activity size={14} />
@@ -50,7 +55,7 @@ export function Telemetry() {
       </button>
       {open && (
         <>
-          <div className="mt-1 truncate text-[12px] text-muted">{activeType ? <>Running: <span className="font-semibold text-cyan">{blockName(activeType)}</span></> : 'Waiting for Run'}</div>
+          <div className="mt-1 truncate text-[12px] text-muted">{activeType ? <>{m.runningBlock} <span className="font-semibold text-cyan">{blockName(activeType)}</span></> : m.waitingRun}</div>
           <dl className="mt-2.5 grid grid-cols-4 gap-1.5">
             {items.map(({ icon: Icon, label, value, warn }) => (
               <div key={label} className={cn('rounded-[10px] bg-white/[0.04] px-1.5 py-1.5 text-center', warn && 'bg-danger/15')}>

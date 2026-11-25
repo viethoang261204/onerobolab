@@ -4,6 +4,8 @@ import { NeutralToneMapping, type PointLight, Vector3 } from 'three';
 import { QUALITY_DPR } from '../../settings/quality';
 import { useSettingsStore } from '../../settings/settings-store';
 import { FrameStats } from '../../simulator/render/FrameStats';
+import { useMessages } from '../../i18n/i18n';
+import { worldMapMessages } from '../world-map.messages';
 import type { IslandView, MapInsets } from '../world-map.types';
 import { AnchorProjector } from './AnchorProjector';
 import { RobotTraveller } from './RobotTraveller';
@@ -47,6 +49,7 @@ function SelectionLight({ target }: { target: { x: number; y: number; z: number 
  * camera. Name tags are DOM (`MapLabels`), placed by `AnchorProjector`. Loaded lazily (three.js chunk).
  */
 export default function WorldMapCanvas({ islands, segments, insets, onSelect, onHover, onBackgroundClick }: WorldMapCanvasProps) {
+  const m = useMessages(worldMapMessages);
   const quality = useSettingsStore((s) => s.quality);
   const center = useMemo(() => journeyCenter(islands.length), [islands.length]);
 
@@ -61,7 +64,8 @@ export default function WorldMapCanvas({ islands, segments, insets, onSelect, on
       gl={{ antialias: true, powerPreference: 'high-performance', toneMapping: NeutralToneMapping }}
       camera={{ fov: 40, near: 0.1, far: 300, position: [center.x, 14, 18] }}
       onPointerMissed={(e) => e.button === 0 && onBackgroundClick()}
-      aria-label="OneRoboLab world map"
+      style={{ touchAction: 'none' }}
+      aria-label={m.canvasAria}
     >
       <WorldMapBackground />
       <hemisphereLight args={['#c4d8ff', '#2a3560', 1.0]} />

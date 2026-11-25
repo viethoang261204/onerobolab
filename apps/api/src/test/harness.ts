@@ -1,6 +1,6 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { serializeProgram } from '@robolab/blocks';
-import { buildProgram, fwd, left, right, stop, type Spec } from '@robolab/blocks/test-utils';
+import { buildProgram, left, right, step, stop, type Spec } from '@robolab/blocks/test-utils';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.ts';
 import { loadConfig } from '../config.ts';
@@ -86,10 +86,10 @@ export function straightProgram(distanceCm: number, extra: Record<string, unknow
   return { format: 'roboverse.blocks', version: 1, blocks, roots: [{ id: 'start', x: 40, y: 28 }], variables: [] };
 }
 
-/** Solving block stacks for the seeded levels (matching `database/seed.sql` maps and allowed blocks). */
+/** Solving block stacks for the seeded levels (mirroring `apps/web/src/features/levels/reference-solutions.ts`). */
 const SEEDED_SOLUTIONS: Readonly<Record<string, readonly Spec[]>> = {
-  'starter-01': [fwd(160), left(90), fwd(120), stop()],
-  'starter-02': [fwd(120), left(90), fwd(120), right(90), fwd(160), right(90), fwd(80), stop()],
+  'starter-01': [step(3), left(90), step(2), stop()],
+  'starter-02': [step(2), left(90), step(2), right(90), step(3), right(90), step(1), stop()],
 };
 
 /** A real solving block program (stored JSON format) for a seeded level slug. */

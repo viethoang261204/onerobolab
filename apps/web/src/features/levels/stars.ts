@@ -1,4 +1,6 @@
 import type { LevelDefinition } from '../../content/levels/types';
+import { messagesFor } from '../i18n/i18n';
+import { levelsMessages } from './levels.messages';
 
 /** Facts about a successful run. */
 export interface RunResult {
@@ -19,15 +21,15 @@ export interface StarCriterion {
  * here (or per course) without touching levels or the engine.
  */
 export const STAR_CRITERIA: readonly StarCriterion[] = [
-  { id: 'complete', label: () => 'Mission complete', met: () => true },
+  { id: 'complete', label: () => messagesFor(levelsMessages).starComplete, met: () => true },
   {
     id: 'efficient',
-    label: (l) => (l.stars.parBlocks !== undefined ? `${l.stars.parBlocks} blocks or fewer` : 'Efficient program'),
+    label: (l) => (l.stars.parBlocks !== undefined ? messagesFor(levelsMessages).starBlocks({ n: l.stars.parBlocks }) : messagesFor(levelsMessages).starEfficient),
     met: (r, l) => l.stars.parBlocks === undefined || r.blockCount <= l.stars.parBlocks,
   },
   {
     id: 'fast',
-    label: (l) => (l.stars.parSeconds !== undefined ? `Finish within ${l.stars.parSeconds} s` : 'Quick finish'),
+    label: (l) => (l.stars.parSeconds !== undefined ? messagesFor(levelsMessages).starWithin({ s: l.stars.parSeconds }) : messagesFor(levelsMessages).starQuick),
     met: (r, l) => l.stars.parSeconds === undefined || r.time <= l.stars.parSeconds,
   },
 ];

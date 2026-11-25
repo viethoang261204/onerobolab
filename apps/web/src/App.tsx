@@ -4,6 +4,8 @@ import { LoginPage } from './features/account/LoginPage';
 import { endStudentSession, restoreSession, startStudentSession } from './features/account/session-actions';
 import { useStudentSession } from './features/account/session-store';
 import { ConnectionBanner, JourneyError, JourneyLoading } from './features/account/SessionScreens';
+import { appMessages } from './app.messages';
+import { useMessages } from './features/i18n/i18n';
 import { useCatalogStore } from './features/catalog/catalog-store';
 import { HomePage } from './features/home/pages/HomePage';
 import { NotFoundPage } from './features/home/pages/NotFoundPage';
@@ -25,20 +27,10 @@ const GaragePage = lazy(() => import('./features/garage/pages/GaragePage'));
 // The admin console is a separate chunk with its own layout; students never load it from the game UI.
 const AdminApp = lazy(() => import('./features/admin/AdminApp'));
 
-const TITLES: Record<Route['name'], string> = {
-  home: 'OneRoboLab',
-  login: 'Sign in · OneRoboLab',
-  robots: 'Robot Garage · OneRoboLab',
-  world: 'World Map · OneRoboLab',
-  studio: 'Code Studio · OneRoboLab',
-  simulator: 'Simulator · OneRoboLab',
-  admin: 'Admin · OneRoboLab',
-  notFound: 'Not found · OneRoboLab',
-};
-
 function PageLoading() {
+  const m = useMessages(appMessages);
   return (
-    <div className="flex flex-1 items-center justify-center" role="status" aria-label="Loading">
+    <div className="flex flex-1 items-center justify-center" role="status" aria-label={m.loading}>
       <span className="h-9 w-9 animate-spin rounded-full border-2 border-cyan/25 border-t-cyan" />
     </div>
   );
@@ -73,7 +65,7 @@ function StudentPages({ route }: { route: Exclude<Route, { name: 'admin' | 'logi
     );
   }
   return (
-    <div className="flex h-full min-w-[1024px] flex-col bg-bg">
+    <div className="flex h-full min-w-0 flex-col bg-bg">
       <Previews />
       <TopNavigation />
       <Suspense fallback={<PageLoading />}>
@@ -98,14 +90,15 @@ export function App() {
   const catalog = useCatalogStore((s) => s.status);
   const wasSignedIn = useRef(false);
   const isAdmin = route.name === 'admin';
+  const titles = useMessages(appMessages);
 
   useEffect(() => {
     document.documentElement.classList.toggle('reduce-motion', reduceMotion);
   }, [reduceMotion]);
 
   useEffect(() => {
-    if (!isAdmin) document.title = TITLES[route.name];
-  }, [route.name, isAdmin]);
+    if (!isAdmin) document.title = titles[route.name];
+  }, [route.name, isAdmin, titles]);
 
   // Page reload with a stored token.
   useEffect(() => {

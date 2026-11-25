@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { LevelRegistry, migrateLevelId } from '../../content/levels/registry';
 import type { LevelDefinition } from '../../content/levels/types';
 import { logToConsole } from '../../stores/console-store';
+import { messagesFor } from '../i18n/i18n';
+import { levelsMessages } from './levels.messages';
 import { useSimulationStore } from '../../stores/simulation-store';
 import { useUiStore } from '../../stores/ui-store';
 import { Analytics } from '../analytics/analytics';
@@ -176,7 +178,7 @@ export const useLevelStore = create<LevelSessionState>()((set, get) => ({
       hintError: null,
       result: null,
     });
-    logToConsole('info', `Mission ${LevelRegistry.code(level)} · ${level.title}`);
+    logToConsole('info', messagesFor(levelsMessages).missionLog({ code: LevelRegistry.code(level), title: level.title }));
     Analytics.track('level_started', { level: id });
     return true;
   },
@@ -203,7 +205,7 @@ export const useLevelStore = create<LevelSessionState>()((set, get) => ({
         (e: unknown) =>
           set({
             hintBusy: false,
-            hintError: e instanceof ApiError && e.code === 'NOT_ENOUGH_XP' ? `You need ${info.cost} XP to unlock this hint. Finish a mission to earn more!` : 'This hint could not be unlocked right now.',
+            hintError: e instanceof ApiError && e.code === 'NOT_ENOUGH_XP' ? messagesFor(levelsMessages).hintNeedXp({ cost: info.cost }) : messagesFor(levelsMessages).hintFailed,
           }),
       );
       return;
@@ -248,7 +250,7 @@ export const useLevelStore = create<LevelSessionState>()((set, get) => ({
     const apply = (finish: RunFinish) => {
       if (get().levelId !== level.id) return;
       if (!finish.passed) {
-        set({ result: { kind: 'failure', title: 'Not quite there', message: finish.reasons.join(' ') || 'The mission isn’t complete yet. Check the objectives and try again.' } });
+        set({ result: { kind: 'failure', title: messagesFor(levelsMessages).notQuiteTitle, message: finish.reasons.join(' ') || messagesFor(levelsMessages).notCompleteYet } });
         return;
       }
       // Store the new progress first: the next mission is chosen from the states it unlocked.
@@ -276,7 +278,7 @@ export const useLevelStore = create<LevelSessionState>()((set, get) => ({
         result: {
           ...base,
           sync: res.kind,
-          note: res.kind === 'offline' ? 'Connection lost. Your result will be saved when you’re back online — your program is saved locally.' : res.message,
+          note: res.kind === 'offline' ? messagesFor(levelsMessages).offlineNote : res.message,
         },
       });
       if (res.kind === 'offline') void res.retry.then((f) => f && apply(f));

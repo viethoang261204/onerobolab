@@ -16,4 +16,5 @@ export interface IslandView {
 export interface MapInsets {
   readonly left: number;
   readonly right: number;
+  readonly bottom?: number;
 }

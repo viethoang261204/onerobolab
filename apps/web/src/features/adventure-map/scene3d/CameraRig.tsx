@@ -97,8 +97,12 @@ export function CameraRig({ layout, start, surface, api, inset, heightAt }: Came
       if (pointers.size === 2) {
         const [p, q] = [...pointers.values()] as [{ x: number; y: number }, { x: number; y: number }];
         const d = Math.hypot(p.x - q.x, p.y - q.y);
-        if (pinch > 0) {
-          const next = zoomBy(cur.current, d / pinch, { x: 0, y: 0 }, sizeRef.current, b);
+        if (pinch > 0 && d > 0) {
+          const r = el.getBoundingClientRect();
+          const midX = (p.x + q.x) / 2;
+          const midY = (p.y + q.y) / 2;
+          const anchor = { x: midX - r.left - r.width / 2 - insetRef.current / 2, y: midY - r.top - r.height / 2 };
+          const next = zoomBy(cur.current, d / pinch, anchor, sizeRef.current, b);
           cur.current = goal.current = next;
         }
         pinch = d;
@@ -117,7 +121,12 @@ export function CameraRig({ layout, start, surface, api, inset, heightAt }: Came
     };
     const onUp = (e: PointerEvent) => {
       pointers.delete(e.pointerId);
-      if (pointers.size === 0) {
+      pinch = 0;
+      if (pointers.size === 1) {
+        const remaining = [...pointers.values()][0]!;
+        last = { x: remaining.x, y: remaining.y };
+        downAt = last;
+      } else if (pointers.size === 0) {
         last = null;
         downAt = null;
         dragging = false;

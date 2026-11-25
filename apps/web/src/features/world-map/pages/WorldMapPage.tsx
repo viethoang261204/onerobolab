@@ -2,14 +2,16 @@ import { Hand, MousePointerClick } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
 import { ErrorBoundary } from '../../../components/common/ErrorBoundary';
 import { useViewportWidth } from '../../../hooks/useViewportWidth';
+import { useLocale, useMessages } from '../../i18n/i18n';
 import { useLevelStore } from '../../levels/level-store';
 import { navigate } from '../../router/router-store';
 import { paths } from '../../router/routes';
-import { WorldDetailPanel } from '../components/WorldDetailPanel';
 import { MapLabels } from '../components/MapLabels';
+import { WorldDetailPanel } from '../components/WorldDetailPanel';
 import { WorldJourneyList } from '../components/WorldJourneyList';
 import { pathSegments } from '../map-view';
 import { journeyPlacement } from '../scene/journey-layout';
+import { worldMapMessages } from '../world-map.messages';
 import { useWorldMapStore } from '../world-map.store';
 import type { IslandView, MapInsets } from '../world-map.types';
 import { currentWorld, summarizeWorlds } from '../world-progress';
@@ -22,8 +24,9 @@ const PANEL = { wide: 340, narrow: 316 } as const;
 const GAP = 16;
 
 function MapLoading() {
+  const m = useMessages(worldMapMessages);
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(ellipse_at_50%_70%,#2a4a8f_0%,#0f1f4a_45%,#060d24_100%)]" role="status" aria-label="Loading the world map">
+    <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(ellipse_at_50%_70%,#2a4a8f_0%,#0f1f4a_45%,#060d24_100%)]" role="status" aria-label={m.loadingMap}>
       <span className="h-10 w-10 animate-spin rounded-full border-2 border-cyan/25 border-t-cyan" />
     </div>
   );
@@ -36,11 +39,14 @@ function MapLoading() {
  * from the level store.
  */
 export default function WorldMapPage() {
+  const m = useMessages(worldMapMessages);
+  const locale = useLocale();
   const progress = useLevelStore((s) => s.progress);
-  const summaries = useMemo(() => summarizeWorlds(progress), [progress]);
+  const summaries = useMemo(() => summarizeWorlds(progress), [progress, locale]);
   const current = useMemo(() => currentWorld(summaries), [summaries]);
   const { selectedId, hoveredId, select, hover } = useWorldMapStore();
   const width = useViewportWidth();
+  const compact = width < 1024;
   const narrow = width < 1360;
 
   // The first visit selects the current world.
@@ -63,10 +69,12 @@ export default function WorldMapPage() {
   const segments = useMemo(() => pathSegments(summaries, selectedId), [summaries, selectedId]);
 
   const panelOpen = !!selected;
-  const insets: MapInsets = {
-    left: (narrow ? RAIL.narrow : RAIL.wide) + GAP * 2,
-    right: panelOpen ? (narrow ? PANEL.narrow : PANEL.wide) + GAP * 2 : 0,
-  };
+  const insets: MapInsets = compact
+    ? { left: 0, right: 0, ...(panelOpen ? { bottom: 260 } : {}) }
+    : {
+        left: (narrow ? RAIL.narrow : RAIL.wide) + GAP * 2,
+        right: panelOpen ? (narrow ? PANEL.narrow : PANEL.wide) + GAP * 2 : 0,
+      };
 
   const onSelect = useCallback((id: string) => select(id), [select]);
 
@@ -80,10 +88,10 @@ export default function WorldMapPage() {
   }, [select]);
 
   return (
-    <main className="relative min-h-0 flex-1 overflow-hidden bg-[#060d24] animate-page-in" aria-label="World map">
-      <ErrorBoundary title="The world map could not be shown">
+    <main className="relative min-h-0 flex-1 overflow-hidden bg-[#060d24] animate-page-in" aria-label={m.mapAria}>
+      <ErrorBoundary title={m.mapErrorTitle}>
         <Suspense fallback={<MapLoading />}>
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 touch-none">
             <WorldMapCanvas
               islands={islands}
               segments={segments}
@@ -101,21 +109,36 @@ export default function WorldMapPage() {
       <MapLabels islands={islands} onSelect={onSelect} onHover={hover} />
 
       {/* Overlays: pointer-events only on the panels themselves. */}
-      <div className="pointer-events-none absolute inset-0 flex items-stretch justify-between gap-4 p-4">
-        <div className="flex min-h-0 flex-col">
-          <WorldJourneyList summaries={summaries} selectedId={selectedId} currentId={current.world.id} collapsed={narrow} onSelect={onSelect} onHover={hover} />
+      {compact ? (
+        <>
+          <div className="pointer-events-none absolute inset-x-2 top-2 z-20 flex justify-center sm:inset-x-4 sm:top-3">
+            <WorldJourneyList summaries={summaries} selectedId={selectedId} currentId={current.world.id} collapsed={false} orientation="horizontal" onSelect={onSelect} onHover={hover} />
+          </div>
+          {selected && (
+            <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center sm:inset-x-4 sm:bottom-3">
+              <div className="w-full sm:max-w-[520px]">
+                <WorldDetailPanel summary={selected} sheet onEnter={() => navigate(paths.world(selected.world.id))} onClose={() => select(null)} />
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="pointer-events-none absolute inset-0 flex items-stretch justify-between gap-4 p-4">
+          <div className="flex min-h-0 flex-col">
+            <WorldJourneyList summaries={summaries} selectedId={selectedId} currentId={current.world.id} collapsed={narrow} onSelect={onSelect} onHover={hover} />
+          </div>
+          <div className="flex min-h-0 flex-col" style={{ width: narrow ? PANEL.narrow : PANEL.wide }}>
+            {selected && <WorldDetailPanel summary={selected} onEnter={() => navigate(paths.world(selected.world.id))} onClose={() => select(null)} />}
+          </div>
         </div>
-        <div className="flex min-h-0 flex-col" style={{ width: narrow ? PANEL.narrow : PANEL.wide }}>
-          {selected && <WorldDetailPanel summary={selected} onEnter={() => navigate(paths.world(selected.world.id))} onClose={() => select(null)} />}
-        </div>
-      </div>
+      )}
 
       <p className="pointer-events-none absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-full bg-[#0b1630]/70 px-4 py-2 text-[12px] text-[#9fb0cc] backdrop-blur-md max-[1180px]:hidden">
         <span className="flex items-center gap-1.5">
-          <MousePointerClick size={14} /> Click a world
+          <MousePointerClick size={14} /> {m.hintClickWorld}
         </span>
         <span className="flex items-center gap-1.5">
-          <Hand size={14} /> Drag to look around · scroll to zoom
+          <Hand size={14} /> {m.hintDragZoom}
         </span>
       </p>
     </main>

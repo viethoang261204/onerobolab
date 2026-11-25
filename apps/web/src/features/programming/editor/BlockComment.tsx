@@ -1,6 +1,8 @@
 import { MessageSquare, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import type { BlockId } from '@robolab/blocks';
+import { useMessages } from '../../i18n/i18n';
+import { programmingMessages } from '../programming.messages';
 import { useProgramStore } from '../state/program-store';
 
 interface BlockCommentProps {
@@ -12,6 +14,7 @@ interface BlockCommentProps {
 
 /** Subtle note attached to a block ("Move toward the blue checkpoint"). */
 export function BlockComment({ id, text, editing, onDone }: BlockCommentProps) {
+  const m = useMessages(programmingMessages);
   const setComment = useProgramStore((s) => s.setComment);
   const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -26,7 +29,7 @@ export function BlockComment({ id, text, editing, onDone }: BlockCommentProps) {
           ref={ref}
           value={text}
           rows={2}
-          placeholder="Write a note…"
+          placeholder={m.commentPlaceholder}
           onChange={(e) => setComment(id, e.target.value)}
           onBlur={() => {
             if (!text.trim()) setComment(id, null);
@@ -38,8 +41,15 @@ export function BlockComment({ id, text, editing, onDone }: BlockCommentProps) {
           }}
           className="w-[190px] resize-none bg-transparent font-sans text-[12px] leading-snug text-text outline-none placeholder:text-faint"
         />
-        <button type="button" aria-label="Remove comment" title="Remove comment" onMouseDown={(e) => e.preventDefault()} onClick={() => setComment(id, null)} className="text-faint hover:text-danger">
-          <X size={13} />
+        <button
+          type="button"
+          aria-label={m.removeComment}
+          title={m.removeComment}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setComment(id, null)}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-faint hover:bg-white/10 hover:text-danger"
+        >
+          <X size={14} />
         </button>
       </div>
     );

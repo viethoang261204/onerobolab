@@ -1,7 +1,8 @@
 import { CheckCircle2, CircleDot, Lock, PlayCircle, Hourglass, type LucideIcon } from 'lucide-react';
 import type { LevelStatus } from '../../levels/progress';
 import { cn } from '../../../utils/cn';
-import { LEVEL_STATUS_LABEL, WORLD_STATUS_LABEL, type WorldStatus } from '../world-progress';
+import { useLocale } from '../../i18n/i18n';
+import { levelStatusLabel, worldStatusLabel, type WorldStatus } from '../world-progress';
 
 type AnyStatus = WorldStatus | LevelStatus;
 
@@ -15,8 +16,9 @@ const LOOK: Record<AnyStatus, { icon: LucideIcon; cls: string }> = {
 
 /** Status pill: icon + words (never colour alone). */
 export function StatusBadge({ status, kind = 'world', className }: { status: AnyStatus; kind?: 'world' | 'level'; className?: string }) {
+  const locale = useLocale();
   const { icon: Icon, cls } = LOOK[status];
-  const label = kind === 'level' && status !== 'coming_soon' ? LEVEL_STATUS_LABEL[status] : WORLD_STATUS_LABEL[status as WorldStatus];
+  const label = kind === 'level' && status !== 'coming_soon' ? levelStatusLabel(status, locale) : worldStatusLabel(status as WorldStatus, locale);
   return (
     <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold', cls, className)}>
       <Icon size={13} strokeWidth={2.4} />

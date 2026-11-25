@@ -1,4 +1,6 @@
 import type { LevelDefinition } from '../../content/levels/types';
+import { messagesFor } from '../i18n/i18n';
+import { levelsMessages } from './levels.messages';
 
 /**
  * The four hint tiers of the mission framework: an idea first, then
@@ -7,7 +9,12 @@ import type { LevelDefinition } from '../../content/levels/types';
  */
 export const HINT_TIERS = ['Idea', 'Pseudocode', 'Partial code', 'Full solution'] as const;
 
+const tierName = (i: number): string => {
+  const m = messagesFor(levelsMessages);
+  return [m.tierIdea, m.tierPseudocode, m.tierPartial, m.tierFull][i] ?? '';
+};
+
 /** Label for hint `i` of a level ("Idea:", or "2." for older levels). */
 export function hintTier(level: LevelDefinition, i: number): string {
-  return level.hints.length === HINT_TIERS.length ? `${HINT_TIERS[i]}:` : `${i + 1}.`;
+  return level.hints.length === HINT_TIERS.length ? `${tierName(i)}:` : `${i + 1}.`;
 }

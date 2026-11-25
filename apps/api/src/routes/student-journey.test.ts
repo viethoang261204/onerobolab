@@ -46,6 +46,7 @@ describe('catalog', () => {
     expect(s1.content.hints[2]).toMatchObject({ cost: 0 });
     expect(s1.content.hints[3]).toMatchObject({ cost: 10, revealed: false, content: null });
     expect(s1.content.missionSettings).toMatchObject({ stopInFinish: true, briefing: { tier: 'easy', mechanics: ['cargo'] } });
+    expect(s1.content.allowedBlocks).toContain('motion.step');
     expect(s1.content.allowedBlocks).toContain('motion.forward');
 
     const s2 = c.levels.find((l: { slug: string }) => l.slug === 'starter-02');

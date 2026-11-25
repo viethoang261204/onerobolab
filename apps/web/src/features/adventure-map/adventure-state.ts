@@ -1,6 +1,8 @@
 import type { LevelDefinition } from '../../content/levels/types';
+import { messagesFor } from '../i18n/i18n';
 import { lockMessage } from '../levels/lock-reason';
 import type { LevelStatus, ProgressData } from '../levels/progress';
+import { adventureMapMessages } from './adventure-map.messages';
 import type { AdventureLayout, AdventureStopDef, AdventureView, PlacedStop, SegmentState, StopStatus, StopView } from './adventure.types';
 
 /*
@@ -10,8 +12,6 @@ import type { AdventureLayout, AdventureStopDef, AdventureView, PlacedStop, Segm
  * Planned stops (no level yet) are locked with a "coming soon" reason.
  * Checkpoints and gates are passed when every mission before them is done.
  */
-
-const PLANNED_REASON = 'This mission is still being built. It will appear here soon.';
 
 /** Real levels → stops: explicit `levelId` first, then missions and the final in order (never challenges implicitly). */
 export function bindLevels(stops: readonly AdventureStopDef[], levels: readonly LevelDefinition[]): Map<string, LevelDefinition> {
@@ -56,7 +56,8 @@ export interface StateInput {
 }
 
 export function adventureView({ layout, levels, progress, statusOf, continueLevelId }: StateInput): AdventureView {
-  const defs = [...layout.main.map((m) => m.def), ...layout.challenges.map((c) => c.def)];
+  const m = messagesFor(adventureMapMessages);
+  const defs = [...layout.main.map((x) => x.def), ...layout.challenges.map((c) => c.def)];
   const bound = bindLevels(defs, levels);
   const numbers = numbering(layout.main);
   const levelStatus = (stopId: string): LevelStatus | 'planned' => {
@@ -67,26 +68,33 @@ export function adventureView({ layout, levels, progress, statusOf, continueLeve
   // Current = the continue level if it's here and open, else the first open main mission.
   const open = (s: LevelStatus | 'planned') => s === 'available' || s === 'in_progress';
   const continueStop = continueLevelId ? [...bound].find(([id, l]) => l.id === continueLevelId && open(levelStatus(id)))?.[0] : undefined;
-  const currentId = continueStop ?? layout.main.find((m) => open(levelStatus(m.def.id)))?.def.id ?? null;
+  const currentId = continueStop ?? layout.main.find((x) => open(levelStatus(x.def.id)))?.def.id ?? null;
 
   // Main path: missions done so far decide checkpoints / gates.
   const mainStatus = new Map<string, StopStatus>();
   const reasons = new Map<string, string | null>();
   let pendingSinceMarker: string[] = [];
   let allBeforeDone = true;
-  for (const m of layout.main) {
-    const { def } = m;
+  for (const stop of layout.main) {
+    const { def } = stop;
     if (def.kind === 'checkpoint' || def.kind === 'gate') {
       mainStatus.set(def.id, allBeforeDone ? 'completed' : 'locked');
       const first = pendingSinceMarker[0];
       const last = pendingSinceMarker.at(-1);
+      const gate = def.kind === 'gate';
       reasons.set(
         def.id,
         allBeforeDone
           ? null
-          : pendingSinceMarker.length === 0
-            ? 'Complete the earlier missions to reach it.'
-            : `Complete mission${first === last ? ` ${first}` : `s ${first}–${last}`} to ${def.kind === 'gate' ? 'open this gate' : 'reach this checkpoint'}.`,
+          : pendingSinceMarker.length === 0 || !first || !last
+            ? m.completeEarlier
+            : first === last
+              ? gate
+                ? m.completeSingleGate({ n: first })
+                : m.completeSingleCheckpoint({ n: first })
+              : gate
+                ? m.completeRangeGate({ first, last })
+                : m.completeRangeCheckpoint({ first, last }),
       );
       pendingSinceMarker = [];
       continue;
@@ -95,7 +103,7 @@ export function adventureView({ layout, levels, progress, statusOf, continueLeve
     const status: StopStatus = s === 'completed' ? 'completed' : def.id === currentId ? 'current' : open(s) ? 'available' : 'locked';
     mainStatus.set(def.id, status);
     const level = bound.get(def.id);
-    reasons.set(def.id, status !== 'locked' ? null : level ? (lockMessage(level.id, progress) ?? 'Complete the missions before this one to unlock it.') : PLANNED_REASON);
+    reasons.set(def.id, status !== 'locked' ? null : level ? (lockMessage(level.id, progress) ?? m.lockedMissionFallback) : m.plannedReason);
     if (s !== 'completed') {
       allBeforeDone = false;
       pendingSinceMarker.push(pad(numbers.get(def.id) ?? 0));
@@ -107,13 +115,14 @@ export function adventureView({ layout, levels, progress, statusOf, continueLeve
     const level = bound.get(def.id) ?? null;
     const number = numbers.get(def.id) ?? null;
     const branchNo = def.branchOf ? numbers.get(def.branchOf) : undefined;
+    const markerNo = def.id.replace(/\D/g, '');
     const label =
       def.kind === 'challenge'
         ? `${pad(branchNo ?? 0)}-A`
         : def.kind === 'checkpoint'
-          ? `CHECKPOINT ${def.id.replace(/\D/g, '')}`
+          ? m.checkpointBadge({ n: markerNo })
           : def.kind === 'gate'
-            ? `GATE ${def.id.replace(/\D/g, '')}`
+            ? m.gateBadge({ n: markerNo })
             : pad(number ?? 0);
     return {
       id: def.id,
@@ -135,12 +144,12 @@ export function adventureView({ layout, levels, progress, statusOf, continueLeve
     };
   };
 
-  const mainViews = layout.main.map((m) => view(m, mainStatus.get(m.def.id) ?? 'locked', reasons.get(m.def.id) ?? null));
+  const mainViews = layout.main.map((x) => view(x, mainStatus.get(x.def.id) ?? 'locked', reasons.get(x.def.id) ?? null));
   const challengeViews = layout.challenges.map((c) => {
     const s = levelStatus(c.def.id);
     const level = bound.get(c.def.id);
     const status: StopStatus = s === 'completed' ? 'completed' : open(s) ? 'available' : 'locked';
-    return view(c, status, status !== 'locked' ? null : level ? lockMessage(level.id, progress) : PLANNED_REASON);
+    return view(c, status, status !== 'locked' ? null : level ? lockMessage(level.id, progress) : m.plannedReason);
   });
 
   const segState = (v: StopView): SegmentState => (v.status === 'completed' ? 'done' : v.status === 'current' || v.status === 'available' ? 'open' : 'locked');

@@ -1,8 +1,10 @@
 import { AlertTriangle, Check } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import type { ProgramState } from '@robolab/blocks';
+import { useMessages } from '../../i18n/i18n';
 import { generatePythonWithLines } from '../generators/python-generator';
 import { highlight } from '../generators/PythonView';
+import { programmingMessages } from '../programming.messages';
 import { useProgramStore } from '../state/program-store';
 import { useRuntimeStore } from '../../simulator/runtime/runtime-store';
 import { pythonToBlocks, type PythonProblem } from './python-to-blocks';
@@ -24,6 +26,7 @@ export const insertPython = (code: string) => inserter?.(code);
  * executed here — Run compiles the blocks as always.
  */
 export function PythonEditor() {
+  const m = useMessages(programmingMessages);
   const program = useProgramStore((s) => s.program);
   const replaceProgram = useProgramStore((s) => s.replaceProgram);
   const generated = useMemo(() => generatePythonWithLines(program), [program]);
@@ -132,7 +135,7 @@ export function PythonEditor() {
             </div>
             <textarea
               ref={area}
-              aria-label="Python program"
+              aria-label={m.pythonEditorAria}
               value={text}
               spellCheck={false}
               autoCapitalize="off"
@@ -157,11 +160,11 @@ export function PythonEditor() {
       >
         {problem ? (
           <>
-            <AlertTriangle size={15} className="shrink-0 text-[#f87171]" aria-hidden="true" /> Line {problem.line}: {problem.message}
+            <AlertTriangle size={15} className="shrink-0 text-[#f87171]" aria-hidden="true" /> {m.pythonErrorLine({ line: problem.line, message: problem.message })}
           </>
         ) : (
           <>
-            <Check size={15} className="shrink-0 text-[#4ade80]" aria-hidden="true" /> Python and blocks are in sync — editing one updates the other.
+            <Check size={15} className="shrink-0 text-[#4ade80]" aria-hidden="true" /> {m.pythonInSync}
           </>
         )}
       </div>

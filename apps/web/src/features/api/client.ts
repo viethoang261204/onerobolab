@@ -1,3 +1,5 @@
+import { messagesFor } from '../i18n/i18n';
+import { apiMessages } from './api.messages';
 /**
  * HTTP client for the OneRoboLab API, shared by the student app and the admin
  * console. The browser only ever talks to the API — never to the database;
@@ -85,7 +87,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       });
     } catch {
       options.onConnectivity?.(false);
-      throw new ApiError(0, 'NETWORK_ERROR', 'Cannot reach the server. Check your connection and try again.');
+      throw new ApiError(0, 'NETWORK_ERROR', messagesFor(apiMessages).unreachable);
     }
     // A gateway error means the API itself is unreachable (e.g. the dev proxy with the API down).
     options.onConnectivity?.(res.status !== 502 && res.status !== 503 && res.status !== 504);
@@ -104,7 +106,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       const apiError = new ApiError(
         res.status,
         typeof err?.code === 'string' ? err.code : `HTTP_${res.status}`,
-        typeof err?.message === 'string' ? err.message : `The server answered ${res.status}.`,
+        typeof err?.message === 'string' ? err.message : messagesFor(apiMessages).answered({ status: res.status }),
         err?.details,
       );
       if (res.status === 401 && token && path !== '/api/auth/login') options.onUnauthorized();
@@ -131,5 +133,5 @@ export function errorMessage(e: unknown): string {
     const problems = e.problems();
     return problems.length ? `${e.message} ${problems.join(' ')}` : e.message;
   }
-  return e instanceof Error ? e.message : 'Something went wrong.';
+  return e instanceof Error ? e.message : messagesFor(apiMessages).wentWrong;
 }

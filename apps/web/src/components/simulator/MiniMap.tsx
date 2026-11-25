@@ -1,7 +1,9 @@
 import type { MapQuery, Pose2D } from '@robolab/shared';
 import { memo, useEffect, useId, useMemo, useRef } from 'react';
 import { useRuntimeStore } from '../../features/simulator/runtime/runtime-store';
+import { useMessages } from '../../features/i18n/i18n';
 import { MapSketch, sketchFrame } from './MapSketch';
+import { simulatorMessages } from './simulator.messages';
 
 /** Fog: how far around the robot the map is revealed (m), and the reveal grid (m). */
 const FOG_RADIUS = 0.55;
@@ -24,6 +26,7 @@ interface MiniMapProps {
  * pulls the pose (no React re-render per frame).
  */
 export const MiniMap = memo(function MiniMap({ map, getRobotPose, fog = false }: MiniMapProps) {
+  const m = useMessages(simulatorMessages);
   const frame = useMemo(() => sketchFrame(map, SIZE, PAD), [map]);
   const { sx, sy } = frame;
   const maskId = `fog-${useId().replace(/:/g, '')}`;
@@ -69,7 +72,7 @@ export const MiniMap = memo(function MiniMap({ map, getRobotPose, fog = false }:
 
   return (
     <div className="glass rounded-[16px] p-2">
-      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="Mini map">
+      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={m.miniMap}>
         {fog && (
           <defs>
             <mask id={maskId}>
@@ -83,7 +86,7 @@ export const MiniMap = memo(function MiniMap({ map, getRobotPose, fog = false }:
         </g>
         {fog && (
           <text x={SIZE / 2} y={SIZE - 8} textAnchor="middle" fontSize="9" fill="#94a3b8" fontFamily="sans-serif">
-            unexplored
+            {m.unexplored}
           </text>
         )}
 

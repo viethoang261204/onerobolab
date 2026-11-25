@@ -60,9 +60,9 @@ export interface DisplayFrame {
   readonly ledIntensity: number;
 }
 
-const CYAN = '#22d3ee';
-const GREEN = '#4ade80';
-const RED = '#f43f5e';
+const CYAN = '#12A6A1';
+const GREEN = '#FFC857';
+const RED = '#F26B5B';
 
 /** LED status display pattern for a status at time t. */
 export function displayFrame(status: RobotVisualStatus, t: number): DisplayFrame {
@@ -70,20 +70,20 @@ export function displayFrame(status: RobotVisualStatus, t: number): DisplayFrame
     case 'idle': {
       // gentle pulse + a quick blink every ~4 s
       const blink = t % 4.2 < 0.12 ? 0.15 : 1;
-      return { color: CYAN, eyeIntensity: 1.5 + Math.sin(t * 1.8) * 0.3, eyeShift: 0, eyeScaleY: blink, ledIntensity: 1.1 + Math.sin(t * 1.8) * 0.25 };
+      return { color: CYAN, eyeIntensity: 1.25 + Math.sin(t * 1.8) * 0.16, eyeShift: 0, eyeScaleY: blink, ledIntensity: 0.85 + Math.sin(t * 1.8) * 0.15 };
     }
     case 'running':
       // scanning: eyes sweep side to side
-      return { color: CYAN, eyeIntensity: 2.2, eyeShift: Math.sin(t * 3.2), eyeScaleY: 1, ledIntensity: 2.6 };
+      return { color: CYAN, eyeIntensity: 1.7, eyeShift: Math.sin(t * 3.2), eyeScaleY: 1, ledIntensity: 1.5 };
     case 'success': {
       const pulse = 0.5 + 0.5 * Math.sin(t * 5);
-      return { color: GREEN, eyeIntensity: 1.6 + pulse * 1.2, eyeShift: 0, eyeScaleY: 1 + pulse * 0.2, ledIntensity: 1.6 + pulse };
+      return { color: GREEN, eyeIntensity: 1.35 + pulse * 0.55, eyeShift: 0, eyeScaleY: 1 + pulse * 0.16, ledIntensity: 1.1 + pulse * 0.45 };
     }
     case 'error': {
       const flash = Math.sin(t * 9) > 0 ? 1 : 0.25;
-      return { color: RED, eyeIntensity: 2 * flash, eyeShift: 0, eyeScaleY: 0.55, ledIntensity: 2 * flash };
+      return { color: RED, eyeIntensity: 1.5 * flash, eyeShift: 0, eyeScaleY: 0.42, ledIntensity: 1.4 * flash };
     }
     case 'stopped':
-      return { color: CYAN, eyeIntensity: 0.45, eyeShift: 0, eyeScaleY: 0.6, ledIntensity: 0.35 };
+      return { color: CYAN, eyeIntensity: 0.55, eyeShift: 0, eyeScaleY: 0.58, ledIntensity: 0.3 };
   }
 }

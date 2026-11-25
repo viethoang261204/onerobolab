@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber';
 import type { MapQuery, RobotDefinition } from '@robolab/shared';
-import { createRef, memo, useEffect, useMemo, type ReactNode, type RefObject } from 'react';
+import { createRef, memo, useEffect, useMemo, useRef, type ReactNode, type RefObject } from 'react';
 import type { Group, Mesh } from 'three';
 import { bodyBob, displayFrame, headPitchTarget, headYawTarget } from './RobotAnimation';
 import { RobotBody } from './RobotBody';
@@ -75,6 +75,8 @@ export const Robot = memo(function Robot({ definition, source, showSensors = fal
   useEffect(() => onRig?.(rig), [onRig, rig]);
 
   const scale = definition.wheelRadius / DESIGN.wheelRadius;
+  const lastStatus = useRef(source.state.status);
+  const detectUntil = useRef(0);
 
   useFrame((frame, delta) => {
     const s = source.state;
@@ -105,11 +107,16 @@ export const Robot = memo(function Robot({ definition, source, showSensors = fal
     if (rearRight.current) rearRight.current.rotation.z = -s.wheelAngle.right;
 
     const d = displayFrame(s.status, t);
+    if (lastStatus.current !== s.status) {
+      lastStatus.current = s.status;
+      detectUntil.current = t + 0.32;
+    }
+    const detecting = !calm && t < detectUntil.current;
     // The student's LED colour replaces cyan; success / error keep their meaning.
     const led = paint && s.status !== 'success' && s.status !== 'error' ? paint.colors.led : d.color;
     mats.eyes.color.set(led);
     mats.eyes.emissive.set(led);
-    mats.eyes.emissiveIntensity = d.eyeIntensity;
+    mats.eyes.emissiveIntensity = detecting ? 2.25 : d.eyeIntensity;
     mats.frontLed.color.set(led);
     mats.frontLed.emissive.set(led);
     mats.frontLed.emissiveIntensity = d.ledIntensity * (paint?.highlight === 'led' ? 2 : 1);
@@ -128,7 +135,10 @@ export const Robot = memo(function Robot({ definition, source, showSensors = fal
     if (le && re) {
       le.position.z = -EYE_Z + d.eyeShift * EYE_TRAVEL;
       re.position.z = EYE_Z + d.eyeShift * EYE_TRAVEL;
-      le.scale.y = re.scale.y = d.eyeScaleY;
+      // Idle arcs, running dots, error squint, and success crescents read by shape.
+      const eyeShape = s.status === 'running' ? 0.58 : s.status === 'error' ? 0.72 : 1;
+      le.scale.set(eyeShape, d.eyeScaleY, 1);
+      re.scale.set(eyeShape, d.eyeScaleY, 1);
     }
   });
 

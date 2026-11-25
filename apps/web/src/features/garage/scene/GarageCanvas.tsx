@@ -5,11 +5,13 @@ import { NeutralToneMapping } from 'three';
 import { DEFAULT_ROBOT_ID, getRobot } from '../../../data/content-registry';
 import { QUALITY_DPR } from '../../settings/quality';
 import { useSettingsStore } from '../../settings/settings-store';
+import { useMessages } from '../../i18n/i18n';
 import { seededRandom } from '../../simulator/environment/geometry';
 import { PropBatch } from '../../simulator/environments/props/batch';
 import { BatchMesh } from '../../simulator/environments/props/BatchMesh';
 import { crate } from '../../simulator/environments/props/builders';
 import { DESIGN } from '../../simulator/robot/RobotTypes';
+import { garageMessages } from '../garage.messages';
 import type { AnimationId, PartId, RobotConfiguration } from '../model/robot-config';
 import { RobotAvatar } from '../render/RobotAvatar';
 
@@ -102,6 +104,7 @@ function Turntable() {
  * slow auto-rotate.
  */
 export default function GarageCanvas({ config, highlight, animation, autoRotate, resetKey }: GarageCanvasProps) {
+  const m = useMessages(garageMessages);
   const quality = useSettingsStore((s) => s.quality);
   const reduceMotion = useSettingsStore((s) => s.reduceMotion);
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null);
@@ -129,7 +132,8 @@ export default function GarageCanvas({ config, highlight, animation, autoRotate,
         c.target.set(...TARGET);
         c.update();
       }}
-      aria-label="Your robot in the garage. Drag to rotate, scroll to zoom, double-click to reset the view."
+      style={{ touchAction: 'none' }}
+      aria-label={m.canvasAria}
     >
       <color attach="background" args={['#0b1222']} />
       <fog attach="fog" args={['#0b1222', 7, 16]} />

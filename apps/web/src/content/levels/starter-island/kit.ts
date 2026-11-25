@@ -15,8 +15,8 @@ export const MOVES: readonly BlockType[] = [...BASIC, 'motion.speed', 'control.r
 export const TIMING: readonly BlockType[] = [...MOVES, 'control.wait'];
 /** + if / if-else and the obstacle sensor (Broken Bridge). */
 export const DECISIONS: readonly BlockType[] = [...TIMING, 'control.if', 'control.ifElse', 'sensor.obstacle'];
-/** + repeat, pick up and drop (Cargo Station). */
-export const CARGO: readonly BlockType[] = [...DECISIONS, 'control.repeat', 'action.pick', 'action.drop'];
+/** + pick up and drop (Cargo Station; repeat is already there from Level 4). */
+export const CARGO: readonly BlockType[] = [...DECISIONS, 'action.pick', 'action.drop'];
 /** + the colour sensor (Colour Warehouse). */
 export const COLORS: readonly BlockType[] = [...CARGO, 'sensor.color'];
 /** + the distance sensor, comparisons and “repeat until” (Smart Gate). */

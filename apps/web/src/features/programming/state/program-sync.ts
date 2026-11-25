@@ -2,10 +2,12 @@ import { create } from 'zustand';
 import { isNetworkError, type ApiError } from '../../api/client';
 import { onReconnect, useConnectionStore } from '../../api/connection-store';
 import { studentApi } from '../../account/student-api';
+import { messagesFor } from '../../i18n/i18n';
 import { browserStorage, readJson, type KeyValueStorage } from '../../persistence/storage';
 import type { ProgramState } from '@robolab/blocks';
 import { parseProgram, serializeProgram } from '@robolab/blocks';
 import { generatePython } from '../generators/python-generator';
+import { programmingMessages } from '../programming.messages';
 import { localProgram, localProgramLevels, setProgramNamespace, useProgramStore } from './program-store';
 
 /*
@@ -76,7 +78,7 @@ const toBody = (p: ProgramState, createVersion: boolean) => ({
 
 /** The server can't be reached: the program stays on this device (the connection store probes for recovery). */
 function offline() {
-  useSyncStore.setState({ status: 'offline', message: 'Connection lost. Your program is saved locally.' });
+  useSyncStore.setState({ status: 'offline', message: messagesFor(programmingMessages).syncOfflineDetail });
   useConnectionStore.getState().setOnline(false);
 }
 
@@ -102,7 +104,7 @@ export async function pushProgram(levelId: string, opts: { createVersion?: boole
     return true;
   } catch (e) {
     if (isNetworkError(e)) offline();
-    else useSyncStore.setState({ status: 'error', message: (e as ApiError).message ?? 'Your program could not be saved online. It is kept on this device.' });
+    else useSyncStore.setState({ status: 'error', message: (e as ApiError).message ?? messagesFor(programmingMessages).syncErrorDetail });
     return false;
   }
 }
@@ -162,7 +164,7 @@ export async function syncLevel(levelId: string): Promise<void> {
   if (decision === 'server-wins-conflict') {
     const backup = localProgram(levelId);
     if (backup) storage.setItem(`roboverse.programs.backup:${studentId}:${levelId}`, serializeProgram(backup));
-    useSyncStore.setState({ status: 'saved', message: 'Loaded your newest program saved on another device. Your older copy is kept as a backup.' });
+    useSyncStore.setState({ status: 'saved', message: messagesFor(programmingMessages).syncConflictDetail });
   }
   applying = true;
   try {

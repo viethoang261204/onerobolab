@@ -173,7 +173,7 @@ describe('runs, scoring and rewards', () => {
     const paid = level.hints.find((h: { cost: number }) => h.cost > 0);
     const res = await send('POST', `/api/levels/starter-01/hints/${paid.id}/reveal`, {});
     expect(res.statusCode, res.body).toBe(200);
-    expect(res.json().hint.content).toContain('move forward 120 cm');
+    expect(res.json().hint.content).toContain('step forward 2');
     await send('POST', `/api/levels/starter-01/hints/${paid.id}/reveal`, {}); // idempotent
     expect((await get('/api/me/progress')).json().stats.totalXp).toBe(60);
   });

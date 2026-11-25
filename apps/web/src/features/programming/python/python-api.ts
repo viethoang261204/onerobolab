@@ -1,4 +1,5 @@
 import type { BlockType } from '@robolab/blocks';
+import { getLocale, type Locale } from '../../i18n/i18n';
 
 /** One entry of the Python reference: what to type, what it does. */
 export interface PythonCommand {
@@ -8,6 +9,42 @@ export interface PythonCommand {
   readonly help: string;
   readonly kind: 'action' | 'value' | 'structure';
 }
+
+const HELP_VI: Partial<Record<BlockType, string>> = {
+  'motion.step': 'Tiến n ô lưới (1 ô = 60 cm).',
+  'motion.forward': 'Đi thẳng về phía trước.',
+  'motion.backward': 'Lùi thẳng về phía sau.',
+  'motion.turnLeft': 'Xoay sang trái tại chỗ.',
+  'motion.turnRight': 'Xoay sang phải tại chỗ.',
+  'motion.stop': 'Dừng robot và kết thúc chương trình.',
+  'motion.speed': 'Chỉnh tốc độ di chuyển của robot (0–100).',
+  'motion.goTo': 'Quay về điểm (cm) và đi thẳng tới đó.',
+  'action.pick': 'Nhặt thùng hàng ngay phía trước robot.',
+  'action.drop': 'Đặt thùng hàng đang mang xuống phía trước robot.',
+  'control.wait': 'Tạm dừng trước khi chạy dòng tiếp theo.',
+  'control.repeat': 'Lặp lại các dòng thụt lề n lần.',
+  'control.forever': 'Lặp lại các dòng thụt lề mãi mãi (đến khi gặp break).',
+  'control.while': 'Lặp lại chừng nào điều kiện còn đúng.',
+  'control.until': 'Lặp lại cho đến khi điều kiện trở thành đúng.',
+  'control.break': 'Thoát vòng lặp và chạy tiếp các lệnh phía sau.',
+  'control.if': 'Chỉ chạy các dòng thụt lề khi điều kiện đúng.',
+  'control.ifElse': 'Chọn chạy giữa các nhánh điều kiện.',
+  'sensor.distance': 'Khoảng cách (cm) tới vật gần nhất phía trước.',
+  'sensor.obstacle': 'Đúng khi có vật cản gần ngay phía trước.',
+  'sensor.line': 'Đúng khi robot đang đi trên vạch kẻ đen.',
+  'sensor.color': 'Màu sắc mặt sàn ngay dưới robot.',
+  'sensor.robotX': 'Vị trí robot theo chiều trái ↔ phải (cm).',
+  'sensor.robotY': 'Vị trí robot theo chiều dưới ↔ trên (cm).',
+  'mission.value': 'Số liệu nhiệm vụ cung cấp cho lượt chạy này.',
+  'variable.set': 'Lưu một số vào biến.',
+  'variable.change': 'Cộng thêm (hoặc dùng -= để trừ bớt) cho biến.',
+  'logic.and': 'Cả hai điều kiện đều phải đúng.',
+  'logic.or': 'Ít nhất một điều kiện phải đúng.',
+  'logic.not': 'Đảo ngược đúng và sai.',
+  'math.random': 'Một số nguyên ngẫu nhiên.',
+  'function.define': 'Đặt tên cho một nhóm lệnh.',
+  'function.call': 'Chạy một hàm đã định nghĩa.',
+};
 
 /**
  * The OneRoboLab Python API, by the block each command stands for — the
@@ -49,10 +86,17 @@ export const PYTHON_API: Partial<Record<BlockType, readonly PythonCommand[]>> = 
   'function.call': [{ code: 'name()', insert: 'my_task()', help: 'Run a function you defined.', kind: 'action' }],
 };
 
-/** The commands a level's toolbox allows, in toolbox order. */
-export function pythonCommands(allowed: readonly BlockType[] | 'all'): PythonCommand[] {
+/** The commands a level's toolbox allows, in toolbox order (localized help text). */
+export function pythonCommands(allowed: readonly BlockType[] | 'all', locale: Locale = getLocale()): PythonCommand[] {
   const types = allowed === 'all' ? (Object.keys(PYTHON_API) as BlockType[]) : allowed;
+  const seen = new Set<string>();
   const out: PythonCommand[] = [];
-  for (const t of types) for (const c of PYTHON_API[t] ?? []) if (!out.includes(c)) out.push(c);
+  for (const t of types) {
+    for (const c of PYTHON_API[t] ?? []) {
+      if (seen.has(c.code)) continue;
+      seen.add(c.code);
+      out.push(locale === 'vi' && HELP_VI[t] ? { ...c, help: HELP_VI[t]! } : c);
+    }
+  }
   return out;
 }

@@ -29,6 +29,16 @@
   --color-warning: #f59e0b;
   --color-pink: #ec4899;
 
+  /* Brand palette (docs/strategy/02-3d-design-direction.md section 2). */
+  --color-brand-navy: #17324d;
+  --color-brand-teal: #12a6a1;
+  --color-brand-coral: #f26b5b;
+  --color-brand-mango: #ffc857;
+  --color-brand-leaf: #68b86b;
+  --color-brand-mist: #dceff2;
+  --color-brand-sand: #f2e7d2;
+  --color-brand-plum: #665080;
+
   /* Block categories (toolbox, blocks, palette). */
   --color-cat-events: #e9a90c;
   --color-cat-movement: #4c7df0;

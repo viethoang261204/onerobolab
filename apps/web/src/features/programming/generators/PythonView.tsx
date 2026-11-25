@@ -1,4 +1,6 @@
 import { Fragment, type ReactNode } from 'react';
+import { useMessages } from '../../i18n/i18n';
+import { programmingMessages } from '../programming.messages';
 
 const TOKEN = /(#.*$)|("[^"]*"|'[^']*')|\b(from|import|while|not|and|or|if|else|elif|for|in|def|break|pass|return|True|False|None)\b|\b(\d+(?:\.\d+)?)\b|(\w+)(?=\()/gm;
 
@@ -23,6 +25,7 @@ export function highlight(line: string) {
 }
 
 export function PythonView({ source }: { source: string }) {
+  const m = useMessages(programmingMessages);
   const lines = source.replace(/\n$/, '').split('\n');
   return (
     <div className="relative min-h-0 flex-1 overflow-auto rounded-[14px] border border-white/6 bg-[#0a1424] py-4 font-mono text-[13.5px] leading-[26px]">
@@ -35,7 +38,7 @@ export function PythonView({ source }: { source: string }) {
         ))}
       </div>
       <p className="mx-4 mt-4 rounded-lg border border-dashed border-edge-strong px-3 py-2 font-sans text-xs text-muted">
-        Generated from your blocks (read-only). Edit the program in the Blocks tab.
+        {m.pythonReadOnlyHint}
       </p>
     </div>
   );

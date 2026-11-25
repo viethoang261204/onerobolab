@@ -3,9 +3,11 @@ import { useMemo, type RefObject } from 'react';
 import { NeutralToneMapping } from 'three';
 import { QUALITY_DPR } from '../../settings/quality';
 import { useSettingsStore } from '../../settings/settings-store';
+import { useMessages } from '../../i18n/i18n';
 import { BatchMesh } from '../../simulator/environments/props/BatchMesh';
 import { FrameStats } from '../../simulator/render/FrameStats';
 import { AnchorProjector } from '../../world-map/components/AnchorProjector';
+import { adventureMapMessages } from '../adventure-map.messages';
 import type { AdventureLayout, AdventureView } from '../adventure.types';
 import { FOV } from '../camera';
 import type { IslandLandmarks } from '../island/island-landmarks';
@@ -36,6 +38,7 @@ export interface AdventureCanvasProps {
  * that pins the HTML mission markers to their 3D points.
  */
 export default function AdventureCanvas({ layout, ground, marks, view, surface, camera, inset }: AdventureCanvasProps) {
+  const m = useMessages(adventureMapMessages);
   const quality = useSettingsStore((s) => s.quality);
   const theme = ISLAND_THEMES[layout.theme];
   const scenery = useMemo(() => sceneryBatch(layout, ground, marks), [layout, ground, marks]);
@@ -48,7 +51,7 @@ export default function AdventureCanvas({ layout, ground, marks, view, surface, 
       shadows={quality !== 'low'}
       gl={{ antialias: true, powerPreference: 'high-performance', toneMapping: NeutralToneMapping }}
       camera={{ fov: FOV, near: 0.5, far: 400, position: [0, 20, 30] }}
-      aria-label="World map"
+      aria-label={m.canvasAria}
     >
       <IslandSky theme={theme} quality={quality} />
       <IslandTerrain layout={layout} ground={ground} quality={quality} />

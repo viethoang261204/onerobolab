@@ -4,6 +4,8 @@ import { onReconnect } from '../api/connection-store';
 import { studentApi, type RunFinish, type RunOutcome, type RunReport } from '../account/student-api';
 import { flushProgram } from '../programming/state/program-sync';
 import { variantIndexFor } from './variant-store';
+import { messagesFor } from '../i18n/i18n';
+import { levelsMessages } from './levels.messages';
 
 /** Seed the simulator plays recorded runs with (the runtime default); the server replays the run with it. */
 export const RUN_SEED = DEFAULT_RUN_SEED;
@@ -43,12 +45,12 @@ export function beginRun(levelId: string): void {
   const started = (async () => {
     try {
       if (!(await flushProgram())) {
-        startError = 'Your program is saved on this device only, so this run can’t be recorded.';
+        startError = messagesFor(levelsMessages).localOnly;
         return null;
       }
       return (await studentApi.startRun(levelId, { layout: variantIndexFor(levelId), seed: RUN_SEED })).run.id;
     } catch (e) {
-      startError = isNetworkError(e) ? 'Connection lost — this run can’t be recorded. Your program is saved locally.' : ((e as Error).message ?? 'This run could not be recorded.');
+      startError = isNetworkError(e) ? messagesFor(levelsMessages).connectionLostRun : ((e as Error).message ?? messagesFor(levelsMessages).runNotRecorded);
       return null;
     }
   })();
@@ -80,10 +82,10 @@ function finishWithRetry(runId: string, outcome: RunOutcome, report: RunReport):
 /** The run ended in the simulator: send what happened, get the server's verdict. */
 export async function endRun(outcome: RunOutcome, report: RunReport): Promise<FinishResult> {
   const run = active;
-  if (!run || run.finished) return { kind: 'unsaved', message: 'This run wasn’t registered.' };
+  if (!run || run.finished) return { kind: 'unsaved', message: messagesFor(levelsMessages).runNotRegistered };
   run.finished = true;
   const runId = await run.started;
-  if (!runId) return { kind: 'unsaved', message: startError ?? 'This run could not be recorded.' };
+  if (!runId) return { kind: 'unsaved', message: startError ?? messagesFor(levelsMessages).runNotRecorded };
   try {
     return { kind: 'saved', finish: await studentApi.finishRun(runId, outcome, report) };
   } catch (e) {

@@ -60,6 +60,7 @@ export const RobotHead = memo(function RobotHead({ mats, rig, showFov }: RobotHe
         <group ref={rig.headPitch} position-y={0.14} scale={1.15}>
           <mesh geometry={RG.housing} material={mats.head} position={[0.02, 0.085, 0]} castShadow />
           <mesh geometry={RG.headCap} material={mats.dark} position={[0.0, 0.158, 0]} castShadow />
+          <mesh geometry={RG.antennaFin} material={mats.blue} position={[-0.055, 0.25, 0.075]} rotation-z={-0.28} castShadow />
           <mesh geometry={RG.dot} material={mats.purple} position={[-0.035, 0.175, 0]} scale={1.2} />
 
           {/* CameraLens: dark surround, glass, glowing iris, pupil, glint */}

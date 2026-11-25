@@ -1,7 +1,9 @@
 import { LogOut } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { formatNumber, useMessages } from '../../features/i18n/i18n';
 import type { UserProfile } from '../../types/ui';
 import { ProgressBar } from '../common/ProgressBar';
+import { navigationMessages } from './navigation.messages';
 
 function Avatar() {
   return (
@@ -26,6 +28,7 @@ function Avatar() {
 
 /** The signed-in student (name, player level) with an account menu (username, XP, sign out). */
 export function UserBadge({ user, username, xp, onSignOut }: { user: UserProfile; username: string; xp: number; onSignOut: () => void }) {
+  const m = useMessages(navigationMessages);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -46,16 +49,16 @@ export function UserBadge({ user, username, xp, onSignOut }: { user: UserProfile
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`${user.name}, level ${user.level}. Account menu`}
+        aria-label={m.account({ name: user.name, level: user.level })}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 items-center gap-2.5 rounded-[var(--radius-control)] border border-white/10 bg-white/[0.04] pl-1.5 pr-3.5 transition-colors duration-[var(--dur-fast)] hover:bg-white/[0.09] aria-expanded:bg-white/[0.09]"
+        className="flex h-11 items-center gap-2.5 lg:h-10 rounded-[var(--radius-control)] border border-white/10 bg-white/[0.04] pl-1.5 pr-3.5 transition-colors duration-[var(--dur-fast)] hover:bg-white/[0.09] aria-expanded:bg-white/[0.09]"
       >
         <Avatar />
         <span className="flex min-w-[96px] flex-col gap-[5px] text-left">
           <span className="max-w-[150px] truncate text-[13.5px] font-semibold leading-none text-white">{user.name}</span>
           <span className="flex items-center gap-2">
-            <span className="text-[12px] leading-none text-muted">Lv. {user.level}</span>
-            <ProgressBar value={user.xpProgress} label={`Level ${user.level} progress`} className="w-[56px]" />
+            <span className="text-[12px] leading-none text-muted">{m.levelShort({ level: user.level })}</span>
+            <ProgressBar value={user.xpProgress} label={m.levelProgress({ level: user.level })} className="w-[56px]" />
           </span>
         </span>
       </button>
@@ -65,7 +68,7 @@ export function UserBadge({ user, username, xp, onSignOut }: { user: UserProfile
             <div className="truncate text-[14px] font-semibold text-white">{user.name}</div>
             <div className="truncate font-mono text-[12px] text-muted">@{username}</div>
             <div className="mt-1 text-[12.5px] text-[#b6c3da]">
-              <span className="tabular font-semibold text-white">{xp}</span> XP · level {user.level}
+              <span className="tabular text-white">{m.xpLevel({ xp: formatNumber(xp), level: user.level })}</span>
             </div>
           </div>
           <div className="my-1 h-px bg-white/10" />
@@ -76,9 +79,9 @@ export function UserBadge({ user, username, xp, onSignOut }: { user: UserProfile
               setOpen(false);
               onSignOut();
             }}
-            className="flex h-9 w-full items-center gap-2.5 rounded-[var(--radius-chip)] px-3 text-left text-[14px] text-[#e2e8f0] transition-colors hover:bg-danger/12 hover:text-[#fca5a5]"
+            className="flex h-11 w-full items-center gap-2.5 rounded-[var(--radius-chip)] px-3 text-left text-[14px] text-[#e2e8f0] transition-colors hover:bg-danger/12 hover:text-[#fca5a5]"
           >
-            <LogOut size={16} aria-hidden="true" /> Sign out
+            <LogOut size={16} aria-hidden="true" /> {m.signOut}
           </button>
         </div>
       )}

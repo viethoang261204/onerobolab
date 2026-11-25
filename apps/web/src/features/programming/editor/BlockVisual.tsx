@@ -1,10 +1,11 @@
 import { AlertCircle, AlertTriangle, Flag, Lock, Play } from 'lucide-react';
-import type { CSSProperties, PointerEvent, ReactNode, Ref } from 'react';
+import type { CSSProperties, MouseEvent, PointerEvent, ReactNode, Ref } from 'react';
 import { cn } from '../../../utils/cn';
-import { START_ID } from '@robolab/blocks';
-import { categoryOf, getBlockDef } from '@robolab/blocks';
-import type { ArgDef, BlockInstance, SlotDef } from '@robolab/blocks';
-import type { BlockIssue } from '@robolab/blocks';
+import { START_ID, categoryOf } from '@robolab/blocks';
+import type { ArgDef, BlockInstance, BlockIssue, SlotDef } from '@robolab/blocks';
+import { useLocale, useMessages } from '../../i18n/i18n';
+import { localizedBlockDef } from '../blocks-vi';
+import { localizeBlockIssue, programmingMessages } from '../programming.messages';
 import { ConnectorSocket, ConnectorTab } from './BlockConnection';
 
 export interface BlockVisualProps {
@@ -20,6 +21,7 @@ export interface BlockVisualProps {
   /** Renders the stack inside a C-block slot. */
   renderSlot?: (slot: SlotDef) => ReactNode;
   onPointerDown?: (e: PointerEvent<HTMLElement>) => void;
+  onContextMenu?: (e: MouseEvent<HTMLElement>) => void;
   /** Floating action menu (selected block). */
   menu?: ReactNode;
   /** Comment bubble below the block. */
@@ -38,12 +40,12 @@ export const blockColors = (block: BlockInstance): CSSProperties => {
   return { ['--blk' as string]: color, ['--blk-edge' as string]: `color-mix(in srgb, ${color} 70%, black)` };
 };
 
-function IssueBadge({ issue }: { issue: BlockIssue }) {
+function IssueBadge({ issue, message }: { issue: BlockIssue; message: string }) {
   if (issue.severity === 'info') return null;
   const Icon = issue.severity === 'error' ? AlertCircle : AlertTriangle;
   return (
     <span
-      title={issue.message}
+      title={message}
       className={cn(
         'ml-1 flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-full',
         issue.severity === 'error' ? 'bg-danger text-white' : 'bg-warning text-[#3b2400]',
@@ -60,9 +62,12 @@ function IssueBadge({ issue }: { issue: BlockIssue }) {
  * about the robot — blocks only describe the program.
  */
 export function BlockVisual(props: BlockVisualProps) {
-  const { block, interactive, selected, issue, ghost, renderArg, renderSlot, onPointerDown, menu, comment, rowRef, running, failed } = props;
-  const def = getBlockDef(block.type);
+  const { block, interactive, selected, issue, ghost, renderArg, renderSlot, onPointerDown, onContextMenu, menu, comment, rowRef, running, failed } = props;
+  const locale = useLocale();
+  const m = useMessages(programmingMessages);
+  const def = localizedBlockDef(block.type, locale);
   const isStart = block.id === START_ID;
+  const issueMessage = issue ? localizeBlockIssue(issue.message, locale) : undefined;
 
   const parts = def.template.map((part, i) =>
     typeof part === 'string' ? (
@@ -87,7 +92,7 @@ export function BlockVisual(props: BlockVisualProps) {
   );
   const surface = 'bg-[var(--blk)] shadow-[inset_0_-3px_0_var(--blk-edge),inset_0_1px_0_rgb(255_255_255/0.25),0_3px_8px_-4px_rgb(0_0_0/0.6)]';
   const showMessage = interactive && selected && issue && issue.severity !== 'info';
-  const helpTitle = issue?.message ?? def.help;
+  const helpTitle = issueMessage ?? def.help;
 
   // ── Value blocks: round (number) or hexagonal (boolean) ──
   if (def.shape === 'reporter' || def.shape === 'boolean') {
@@ -101,12 +106,13 @@ export function BlockVisual(props: BlockVisualProps) {
         <span
           ref={rowRef as unknown as Ref<HTMLSpanElement>}
           onPointerDown={onPointerDown}
+          onContextMenu={onContextMenu}
           className={cn(
-            'inline-flex h-[32px] items-center gap-1',
+            'inline-flex h-[34px] lg:h-[32px] items-center gap-1 select-none',
             hex ? 'hex px-4' : 'rounded-full px-2.5',
             surface,
             text,
-            interactive && 'cursor-grab active:cursor-grabbing',
+            interactive && 'cursor-grab touch-none active:cursor-grabbing',
             issue?.severity === 'error' && !selected && 'ring-2 ring-danger',
             block.disabled && 'blk-disabled',
           )}
@@ -125,22 +131,31 @@ export function BlockVisual(props: BlockVisualProps) {
     <div
       ref={rowRef}
       onPointerDown={onPointerDown}
+      onContextMenu={onContextMenu}
       title={helpTitle}
-      className={cn('relative flex min-h-[40px] items-center gap-1 py-1.5 pl-3 pr-3', surface, text, interactive && !isStart && 'cursor-grab active:cursor-grabbing', state, extra)}
+      className={cn(
+        'relative flex min-h-[44px] lg:min-h-[40px] items-center gap-1 py-1.5 pl-3 pr-3 select-none',
+        surface,
+        text,
+        interactive && 'touch-none',
+        interactive && !isStart && 'cursor-grab active:cursor-grabbing',
+        state,
+        extra,
+      )}
     >
       {def.shape !== 'hat' && <ConnectorSocket />}
       {isStart && <Flag size={16} strokeWidth={2.6} className="mr-1 text-[#3b2400]" />}
       {children}
       {isStart && (
-        <span title="The program starts here. This block can’t be moved or deleted." className="ml-1 flex items-center text-[#3b2400]/70">
+        <span title={m.startBlockLockHint} className="ml-1 flex items-center text-[#3b2400]/70">
           <Lock size={12} strokeWidth={2.6} />
         </span>
       )}
-      {issue && <IssueBadge issue={issue} />}
+      {issue && issueMessage && <IssueBadge issue={issue} message={issueMessage} />}
       {tab && <ConnectorTab offset={def.shape === 'c' ? 30 : 14} />}
       {(running || failed) && (
         <span
-          aria-label={running ? 'Running now' : 'The robot stopped here'}
+          aria-label={running ? m.runningNow : m.stoppedHere}
           className={cn(
             'absolute -left-[26px] top-1/2 flex h-[20px] w-[20px] -translate-y-1/2 items-center justify-center rounded-full text-white shadow-lg',
             running ? 'bg-[#22c55e] shadow-[0_0_12px_#4ade80]' : 'bg-danger',
@@ -154,11 +169,11 @@ export function BlockVisual(props: BlockVisualProps) {
 
   // Comment + problem message float to the right so stack geometry never changes.
   const side = (comment || showMessage) && (
-    <div className={cn('absolute left-full ml-3 flex w-max max-w-[230px] flex-col items-start gap-1.5', menu ? 'top-[44px]' : 'top-1')}>
+    <div className={cn('absolute left-full ml-3 flex w-max max-w-[230px] flex-col items-start gap-1.5', menu ? 'top-1 lg:top-[44px]' : 'top-1')}>
       {comment}
       {showMessage && (
         <div className={cn('rounded-md px-2 py-1 font-sans text-[11.5px] font-medium leading-snug shadow', issue?.severity === 'error' ? 'bg-[#3a1119] text-[#fecdd3]' : 'bg-[#3a2a0c] text-[#fde68a]')}>
-          {issue?.message}
+          {issueMessage}
         </div>
       )}
     </div>

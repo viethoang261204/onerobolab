@@ -3,8 +3,10 @@ import type { LevelDefinition } from '../../content/levels/types';
 import { WorldRegistry } from '../../content/worlds/registry';
 import type { WorldDefinition } from '../../content/worlds/types';
 import { ROBOT_OPTIONS } from '../../data/robots';
+import { messagesFor, type Locale } from '../i18n/i18n';
 import { lockMessage } from '../levels/lock-reason';
 import { learningStreak, levelStatus, type LevelStatus, type ProgressData } from '../levels/progress';
+import { worldMapMessages } from './world-map.messages';
 
 /*
  * Everything the Home page and World Map show about progress is DERIVED here
@@ -49,14 +51,16 @@ export function summarizeWorld(world: WorldDefinition, progress: ProgressData): 
   else if (statuses.some((s) => s === 'completed' || s === 'in_progress')) status = 'in_progress';
   else status = 'available';
 
+  const m = messagesFor(worldMapMessages);
   const previous = WorldRegistry.previous(world.id);
   // With the API, the first mission's unlock rules explain the world lock.
-  const serverReason = status === 'locked' && progress.server && levels[0] ? lockMessage(levels[0].id, progress)?.replace('this mission', 'this world') : null;
+  const rawServerReason = status === 'locked' && progress.server && levels[0] ? lockMessage(levels[0].id, progress) : null;
+  const serverReason = rawServerReason ? rawServerReason.replace(m.missionPhrase, m.worldPhrase).replace('this mission', m.worldPhrase) : null;
   const lockedReason =
     status === 'coming_soon'
-      ? 'New missions for this world are being built.'
+      ? m.comingSoonReason
       : status === 'locked'
-        ? (serverReason ?? `Finish every mission in ${previous?.name ?? 'the previous world'} to unlock.`)
+        ? (serverReason ?? m.lockedWorldReason({ prev: previous?.name ?? m.previousWorldFallback }))
         : null;
 
   return {
@@ -79,7 +83,38 @@ export const summarizeWorlds = (progress: ProgressData): WorldSummary[] => World
 /** True when the world's missions can be opened. */
 export const isWorldOpen = (s: WorldStatus) => s === 'available' || s === 'in_progress' || s === 'completed';
 
-/** Short status label (never colour alone). */
+/** Short status label (never colour alone; locale-aware). */
+export function worldStatusLabel(status: WorldStatus, locale?: Locale): string {
+  const m = messagesFor(worldMapMessages, locale);
+  switch (status) {
+    case 'coming_soon':
+      return m.worldStatusComingSoon;
+    case 'locked':
+      return m.worldStatusLocked;
+    case 'available':
+      return m.worldStatusAvailable;
+    case 'in_progress':
+      return m.worldStatusInProgress;
+    case 'completed':
+      return m.worldStatusCompleted;
+  }
+}
+
+export function levelStatusLabel(status: LevelStatus, locale?: Locale): string {
+  const m = messagesFor(worldMapMessages, locale);
+  switch (status) {
+    case 'locked':
+      return m.levelStatusLocked;
+    case 'available':
+      return m.levelStatusAvailable;
+    case 'in_progress':
+      return m.levelStatusInProgress;
+    case 'completed':
+      return m.levelStatusCompleted;
+  }
+}
+
+/** Short status label (never colour alone; English table kept for callers outside this area). */
 export const WORLD_STATUS_LABEL: Record<WorldStatus, string> = {
   coming_soon: 'Coming soon',
   locked: 'Locked',

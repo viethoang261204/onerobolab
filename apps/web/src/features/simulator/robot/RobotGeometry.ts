@@ -58,6 +58,8 @@ export const RG = {
   deck: rbox(0.4, 0.05, 0.36, 0.022),
   hood: rbox(0.2, 0.05, 0.3, 0.022),
   sidePanel: rbox(0.2, 0.15, 0.024, 0.012),
+  /** Off-axis leaf fin: Mầm's readable top-down identity mark. */
+  antennaFin: rbox(0.045, 0.16, 0.035, 0.018, 3),
   fender: fenderGeometry(),
   deckVent: rbox(0.012, 0.008, 0.16, 0.004, 1),
   bezel: rbox(0.03, 0.13, 0.3, 0.02),

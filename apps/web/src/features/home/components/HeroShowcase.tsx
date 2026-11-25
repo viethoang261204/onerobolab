@@ -2,6 +2,8 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { type Group, NeutralToneMapping } from 'three';
 import { WorldRegistry } from '../../../content/worlds/registry';
+import { useMessages } from '../../i18n/i18n';
+import { homeMessages } from '../home.messages';
 import { QUALITY_DPR } from '../../settings/quality';
 import { useSettingsStore } from '../../settings/settings-store';
 import { RobotAvatar } from '../../garage/render/RobotAvatar';
@@ -30,6 +32,7 @@ function Turntable({ children }: { children: ReactNode }) {
  * gradient; rendering pauses while scrolled out of view.
  */
 export default function HeroShowcase() {
+  const m = useMessages(homeMessages);
   const quality = useSettingsStore((s) => s.quality);
   const reduceMotion = useSettingsStore((s) => s.reduceMotion);
   const host = useRef<HTMLDivElement>(null);
@@ -45,7 +48,7 @@ export default function HeroShowcase() {
   const world = WorldRegistry.first();
   const p = world.mapPosition;
   return (
-    <div ref={host} className="h-full w-full" aria-label="Rover on Starter Island" role="img">
+    <div ref={host} className="h-full w-full" aria-label={m.showcaseLabel} role="img">
       <Canvas
         dpr={QUALITY_DPR[quality]}
         frameloop={visible ? 'always' : 'never'}

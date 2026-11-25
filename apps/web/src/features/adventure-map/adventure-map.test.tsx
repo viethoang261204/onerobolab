@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { adventureFor, ALL_ADVENTURES } from '../../content/adventures/registry';
 import { LevelRegistry } from '../../content/levels/registry';
 import { WorldRegistry } from '../../content/worlds/registry';
+import { setLocale } from '../i18n/i18n';
 import type { ProgressData } from '../levels/progress';
 import { statusOfLevel } from '../world-map/world-progress';
 import { adventureView, bindLevels } from './adventure-state';
@@ -296,5 +297,26 @@ describe('rendering (server render)', () => {
     expect(planned).toContain('Coming soon');
     expect(planned).toContain('XP');
     expect(panel('gate2')).toContain('Gate closed');
+  });
+
+  it('Vietnamese locale translates adventure HUD, legend, markers and detail panel', () => {
+    setLocale('vi');
+    try {
+      const layout = layoutOf('starter-island');
+      const v = viewOf('starter-island', EMPTY);
+      const mapHtml = render(<WorldMap worldName="Starter Island" layout={layout} view={v} selectedId={null} onOpen={() => undefined} camera={{ current: null }} inset={0} />);
+      expect(mapHtml).toContain('BẮT ĐẦU');
+      expect(mapHtml).toContain('Tới nhiệm vụ hiện tại');
+      expect(mapHtml).toContain('CỔNG 2');
+      const sidebar = render(<WorldSidebar world={world('starter-island')} intro="Learn the basics." view={v} stars={0} maxStars={9} collapsed={false} sheet onToggle={() => undefined} onContinue={() => undefined} onBack={() => undefined} />);
+      expect(sidebar).toContain('Thế giới 1');
+      expect(sidebar).toContain('Tiếp tục nhiệm vụ');
+      expect(sidebar).toContain('Điểm kiểm tra');
+      const gatePanel = render(<MissionDetailPanel stop={v.stops.find((s) => s.id === 'gate2')!} worldColor="#4ade80" onClose={() => undefined} />);
+      expect(gatePanel).toContain('Cổng đang khoá');
+      expect(gatePanel).toContain('Hoàn thành các nhiệm vụ 09–13 để mở cổng này.');
+    } finally {
+      setLocale('en');
+    }
   });
 });

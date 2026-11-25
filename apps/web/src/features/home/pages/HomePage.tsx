@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { useMessages } from '../../i18n/i18n';
+import { homeMessages } from '../home.messages';
 import { useStudentSession } from '../../account/session-store';
 import { useLevelStore } from '../../levels/level-store';
 import { continueTarget, playerStats, summarizeWorlds } from '../../world-map/world-progress';
@@ -15,6 +17,7 @@ import { WorldPreviewGrid } from '../components/WorldPreviewGrid';
  * progress and totals once signed in (Student Phase 4).
  */
 export function HomePage() {
+  const m = useMessages(homeMessages);
   const progress = useLevelStore((s) => s.progress);
   const name = useStudentSession((s) => s.user?.displayName ?? null);
   const summaries = useMemo(() => summarizeWorlds(progress), [progress]);
@@ -22,10 +25,10 @@ export function HomePage() {
   const stats = useMemo(() => playerStats(progress, new Date()), [progress]);
 
   return (
-    <main className="min-h-0 flex-1 overflow-y-auto" aria-label="Home">
-      <div className="mx-auto flex max-w-[1320px] flex-col gap-7 px-8 pb-12 pt-7 animate-page-in max-[1100px]:px-5">
+    <main className="min-h-0 flex-1 overflow-y-auto" aria-label={m.homeLabel}>
+      <div className="mx-auto flex max-w-[1320px] flex-col gap-5 px-4 pb-10 pt-4 animate-page-in sm:gap-7 sm:px-5 sm:pt-7 lg:px-8 lg:pb-12">
         <HeroSection name={name} />
-        <div className="grid grid-cols-[1.55fr_1fr] gap-5 max-[1180px]:grid-cols-1">
+        <div className="grid grid-cols-1 gap-4 sm:gap-5 min-[1180px]:grid-cols-[1.55fr_1fr]">
           <ContinueLearningCard target={target} />
           <ProgressStats stats={stats} />
         </div>

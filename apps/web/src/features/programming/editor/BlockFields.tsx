@@ -1,11 +1,13 @@
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useState, type PointerEvent } from 'react';
 import type { DropdownOption, FieldValue } from '@robolab/blocks';
+import { useMessages } from '../../i18n/i18n';
+import { programmingMessages } from '../programming.messages';
 
 /** Field widgets must not start block drags. */
 const stop = (e: PointerEvent) => e.stopPropagation();
 
-const pill = 'flex h-[26px] items-center rounded-full bg-white px-2 font-display text-[13.5px] font-extrabold text-[#1e293b] shadow-[inset_0_-2px_0_rgb(0_0_0/0.12)]';
+const pill = 'flex h-[28px] lg:h-[26px] items-center rounded-full bg-white px-2 font-display text-[13.5px] font-extrabold text-[#1e293b] shadow-[inset_0_-2px_0_rgb(0_0_0/0.12)]';
 
 interface NumberFieldProps {
   value: FieldValue;
@@ -63,8 +65,9 @@ interface DropdownFieldProps {
 }
 
 export function DropdownField({ value, options, onChange, label, extra, invalid }: DropdownFieldProps) {
+  const m = useMessages(programmingMessages);
   const text = options.find((o) => o.value === value)?.label ?? (value || '—');
-  const box = `relative flex h-[26px] items-center gap-1 rounded-[8px] bg-black/20 pl-2 pr-1.5 text-[13.5px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.22)] ${invalid ? 'ring-2 ring-danger' : ''}`;
+  const box = `relative flex h-[28px] lg:h-[26px] items-center gap-1 rounded-[8px] bg-black/20 pl-2 pr-1.5 text-[13.5px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.22)] ${invalid ? 'ring-2 ring-danger' : ''}`;
   if (!onChange) {
     return (
       <span className={box}>
@@ -84,7 +87,7 @@ export function DropdownField({ value, options, onChange, label, extra, invalid 
         onKeyDown={(e) => e.stopPropagation()}
         className="absolute inset-0 cursor-pointer opacity-0"
       >
-        {!options.some((o) => o.value === value) && <option value={value}>{value || 'choose…'}</option>}
+        {!options.some((o) => o.value === value) && <option value={value}>{value || m.chooseOption}</option>}
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
@@ -108,17 +111,18 @@ interface VariableFieldProps {
 
 /** Variable picker with a "New variable…" entry. */
 export function VariableField({ value, variables, onChange, onCreate, invalid = false }: VariableFieldProps) {
+  const m = useMessages(programmingMessages);
   return (
     <DropdownField
-      label="Variable"
+      label={m.fieldVariable}
       value={value}
       options={variables.map((v) => ({ value: v, label: v }))}
-      {...(onCreate && { extra: { value: NEW_VARIABLE, label: 'New variable…' } })}
+      {...(onCreate && { extra: { value: NEW_VARIABLE, label: m.newVariableOption } })}
       invalid={invalid}
       {...(onChange && {
         onChange: (v: string) => {
           if (v !== NEW_VARIABLE) return onChange(v);
-          const name = window.prompt('Name for the new variable:')?.trim();
+          const name = window.prompt(m.newVariablePrompt)?.trim();
           if (name) {
             onCreate?.(name);
             onChange(name);

@@ -7,6 +7,7 @@ import { HOME_ACTIONS, runHomeAction } from '../home/home-actions';
 import { ContinueLearningCard } from '../home/components/ContinueLearningCard';
 import { ProgressStats } from '../home/components/ProgressStats';
 import { HomePage } from '../home/pages/HomePage';
+import { setLocale } from '../i18n/i18n';
 import { LevelDetailPanel } from '../level-selection/components/LevelDetailPanel';
 import { levelObjectives, levelTools, starGoals } from '../level-selection/level-info';
 import { startMission } from '../level-selection/start-mission';
@@ -329,5 +330,24 @@ describe('rendering (server render, no DOM needed)', () => {
     expect(labels.match(/<button/g)).toHaveLength(WorldRegistry.all.length);
     expect(labels).toContain('World 2: Canyon Circuit. Finish every mission in Starter Island to unlock.');
     expect(labels).toContain('World 5: Sky Lab. New missions for this world are being built.');
+  });
+
+  it('Vietnamese locale translates world map, level detail and star goals', () => {
+    setLocale('vi');
+    try {
+      const open = html(<WorldDetailPanel summary={summary('starter-island', EMPTY)} sheet onEnter={() => undefined} onClose={() => undefined} />);
+      expect(open).toContain('Vào thế giới');
+      expect(open).toContain('0 / 24 nhiệm vụ');
+      expect(open).toContain('Thế giới 1');
+      const locked = html(<WorldDetailPanel summary={summary('canyon-circuit', EMPTY)} onEnter={() => undefined} onClose={() => undefined} />);
+      expect(locked).toContain('Hoàn thành tất cả nhiệm vụ ở Starter Island để mở khoá.');
+      const level = LevelRegistry.get('starter-01')!;
+      const detail = html(<LevelDetailPanel level={level} world={WorldRegistry.first()} status="available" progress={undefined} onStart={() => undefined} onBack={() => undefined} />);
+      expect(detail).toContain('Bắt đầu nhiệm vụ');
+      expect(detail).toContain('Di chuyển');
+      expect(detail).toContain('Hoàn thành nhiệm vụ');
+    } finally {
+      setLocale('en');
+    }
   });
 });

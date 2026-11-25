@@ -2,7 +2,10 @@ import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { ArgDef, BlockId } from '@robolab/blocks';
 import { chainIds } from '@robolab/blocks';
+import { useLocale, useMessages } from '../../i18n/i18n';
 import { useRuntimeStore } from '../../simulator/runtime/runtime-store';
+import { localizedArgLabel } from '../blocks-vi';
+import { programmingMessages } from '../programming.messages';
 import { useDragStore } from '../state/drag-store';
 import { useProgramStore } from '../state/program-store';
 import { playSnap } from './block-actions';
@@ -27,6 +30,8 @@ export const StackView = memo(function StackView({ headId }: { headId: BlockId }
 
 /** Argument socket that can also receive a value block. */
 function ArgSlot({ blockId, name, arg }: { blockId: BlockId; name: string; arg: ArgDef }): ReactNode {
+  const m = useMessages(programmingMessages);
+  const locale = useLocale();
   const child = useProgramStore((s) => s.program.blocks[blockId]?.inputs[name] ?? null);
   const value = useProgramStore((s) => s.program.blocks[blockId]?.fields[name]);
   const variables = useProgramStore((s) => s.program.variables);
@@ -63,11 +68,11 @@ function ArgSlot({ blockId, name, arg }: { blockId: BlockId; name: string; arg: 
       );
     case 'boolean':
       return socket(
-        child ? <BlockInstance id={child} /> : <span title="Drop a yes/no block here" className="hex inline-block h-[26px] w-[50px] bg-black/30" />,
+        child ? <BlockInstance id={child} /> : <span title={m.dropBooleanHere} className="hex inline-block h-[26px] w-[50px] bg-black/30" />,
         'boolean',
       );
     case 'dropdown':
-      return <DropdownField label={name} value={String(value ?? '')} options={arg.options} onChange={(v) => updateField(blockId, name, v)} />;
+      return <DropdownField label={localizedArgLabel(name, locale)} value={String(value ?? '')} options={arg.options} onChange={(v) => updateField(blockId, name, v)} />;
     case 'variable':
       return (
         <VariableField
@@ -83,7 +88,7 @@ function ArgSlot({ blockId, name, arg }: { blockId: BlockId; name: string; arg: 
     case 'functionName':
       return (
         <DropdownField
-          label="Function"
+          label={m.fieldFunction}
           value={String(value ?? '')}
           options={functions.map((f) => ({ value: f, label: f }))}
           invalid={!functions.includes(String(value ?? ''))}
@@ -93,7 +98,7 @@ function ArgSlot({ blockId, name, arg }: { blockId: BlockId; name: string; arg: 
     case 'dataKey':
       return (
         <DropdownField
-          label="Mission value"
+          label={m.fieldMissionValue}
           value={String(value ?? '')}
           options={dataKeys.map((k) => ({ value: k, label: k }))}
           invalid={!dataKeys.includes(String(value ?? ''))}
@@ -108,6 +113,7 @@ function ArgSlot({ blockId, name, arg }: { blockId: BlockId; name: string; arg: 
  * issue and ghost state, so edits elsewhere don't re-render it.
  */
 export const BlockInstance = memo(function BlockInstance({ id }: { id: BlockId }) {
+  const m = useMessages(programmingMessages);
   const block = useProgramStore((s) => s.program.blocks[id]);
   const selected = useProgramStore((s) => s.selectedId === id);
   const issue = useProgramStore((s) => s.issues[id]);
@@ -137,13 +143,18 @@ export const BlockInstance = memo(function BlockInstance({ id }: { id: BlockId }
       failed={failed}
       rowRef={rowRef}
       onPointerDown={(e) => startBlockDrag(e, { kind: 'workspace', id })}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        useProgramStore.getState().select(id);
+      }}
       renderArg={(name, arg) => <ArgSlot blockId={id} name={name} arg={arg} />}
       renderSlot={(slot) => {
         const head = block.slots[slot.name];
         return head ? (
           <StackView headId={head} />
         ) : (
-          <div className="flex h-[26px] items-center rounded-md border border-dashed border-white/15 px-2 font-sans text-[11px] text-white/35">drop blocks here</div>
+          <div className="flex h-[26px] items-center rounded-md border border-dashed border-white/15 px-2 font-sans text-[11px] text-white/35">{m.dropBlocksHere}</div>
         );
       }}
       {...(hasComment && {

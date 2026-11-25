@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ONBOARDING_TOURS } from '../../content/tutorials/onboarding';
+import { ONBOARDING_TOURS, stepText } from '../../content/tutorials/onboarding';
+import { useLocale, useMessages } from '../i18n/i18n';
+import { onboardingMessages } from './onboarding.messages';
 import { useOnboardingStore } from './onboarding-store';
 import { robotScreen } from './robot-screen';
 import { buttonClass } from '../../components/common/Button';
@@ -13,7 +15,7 @@ interface Box {
 }
 
 const PAD = 8;
-const CARD_W = 300;
+const CARD_MAX_W = 300;
 
 /** Measure the current target: a [data-tour] element, or a circle around the robot. */
 function measure(target: string): Box | null {
@@ -33,6 +35,8 @@ function measure(target: string): Box | null {
  * explains it in one sentence. Skippable; never shown again once finished.
  */
 export function OnboardingTour() {
+  const m = useMessages(onboardingMessages);
+  const locale = useLocale();
   const step = useOnboardingStore((s) => s.step);
   const tour = useOnboardingStore((s) => s.tour);
   const STEPS = tour ? ONBOARDING_TOURS[tour] : [];
@@ -77,6 +81,7 @@ export function OnboardingTour() {
 
   // Card beside the target: below if there is room, otherwise above / inside.
   const vw = window.innerWidth;
+  const CARD_W = Math.min(CARD_MAX_W, vw - 24);
   const vh = window.innerHeight;
   let cardX = box ? Math.min(Math.max(12, box.x + box.w / 2 - CARD_W / 2), vw - CARD_W - 12) : vw / 2 - CARD_W / 2;
   let cardY = box ? box.y + box.h + 14 : vh / 2 - 80;
@@ -87,7 +92,7 @@ export function OnboardingTour() {
   }
 
   return (
-    <div className="fixed inset-0 z-[100]" role="dialog" aria-label="Quick tour">
+    <div className="fixed inset-0 z-[100]" role="dialog" aria-label={m.tour}>
       {box ? (
         <div
           className="pointer-events-none absolute border-2 border-cyan/80 transition-[left,top,width,height] duration-[var(--dur-base)]"
@@ -96,15 +101,15 @@ export function OnboardingTour() {
       ) : (
         <div className="absolute inset-0 bg-[#030712]/66" />
       )}
-      <div className="glass absolute w-[300px] rounded-[var(--radius-dialog)] p-4 animate-pop-in" key={step} style={{ left: cardX, top: cardY }}>
+      <div className="glass absolute rounded-[var(--radius-dialog)] p-4 animate-pop-in" key={step} style={{ left: cardX, top: cardY, width: CARD_W }}>
         <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan">
-          Step {step + 1} of {STEPS.length}
+          {m.step({ n: step + 1, total: STEPS.length })}
         </div>
-        <h2 className="mt-1 font-display text-[19px] font-black text-white">{s.title}</h2>
-        <p className="mt-1 text-[13.5px] leading-relaxed text-[#cbd5e1]">{s.body}</p>
+        <h2 className="mt-1 font-display text-[19px] font-black text-white">{stepText(s, locale).title}</h2>
+        <p className="mt-1 text-[13.5px] leading-relaxed text-[#cbd5e1]">{stepText(s, locale).body}</p>
         <div className="mt-4 flex items-center justify-between">
-          <button type="button" onClick={skip} className="rounded-[var(--radius-chip)] px-2 py-1 text-[12.5px] text-muted hover:text-white">
-            Skip tour
+          <button type="button" onClick={skip} className="rounded-[var(--radius-chip)] min-h-11 px-2 py-1 text-[12.5px] text-muted hover:text-white">
+            {m.skip}
           </button>
           <div className="flex items-center gap-3">
             <span className="flex gap-1">
@@ -112,8 +117,8 @@ export function OnboardingTour() {
                 <span key={i} className={i === step ? 'h-1.5 w-4 rounded-full bg-cyan' : 'h-1.5 w-1.5 rounded-full bg-white/20'} />
               ))}
             </span>
-            <button type="button" autoFocus onClick={next} className={buttonClass('primary', 'h-9 min-h-9 px-4 text-[14px]')}>
-              {last ? 'Let’s go' : 'Next'}
+            <button type="button" autoFocus onClick={next} className={buttonClass('primary', 'h-11 min-h-11 px-4 text-[14px]')}>
+              {last ? m.done : m.next}
             </button>
           </div>
         </div>

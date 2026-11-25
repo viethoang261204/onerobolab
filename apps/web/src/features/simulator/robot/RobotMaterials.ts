@@ -30,24 +30,24 @@ const emissive = (hex: string, intensity: number) =>
 
 export function createRobotMaterials(): RobotMaterials {
   return {
-    white: new MeshPhysicalMaterial({ color: '#f3f5fa', roughness: 0.32, clearcoat: 0.7, clearcoatRoughness: 0.25 }),
-    head: new MeshPhysicalMaterial({ color: '#f3f5fa', roughness: 0.32, clearcoat: 0.7, clearcoatRoughness: 0.25 }),
-    dark: new MeshStandardMaterial({ color: '#223055', roughness: 0.5, metalness: 0.15 }),
-    darkGloss: new MeshPhysicalMaterial({ color: '#25345c', roughness: 0.28, metalness: 0.2, clearcoat: 0.7 }),
-    blue: new MeshPhysicalMaterial({ color: '#2d6bf0', roughness: 0.3, clearcoat: 0.8, clearcoatRoughness: 0.2 }),
-    rubber: new MeshStandardMaterial({ color: '#1a1d26', roughness: 0.92, metalness: 0 }),
-    hub: new MeshStandardMaterial({ color: '#2a3350', roughness: 0.4, metalness: 0.45 }),
-    metal: new MeshStandardMaterial({ color: '#b9c3d6', roughness: 0.3, metalness: 0.7 }),
+    white: new MeshPhysicalMaterial({ color: '#12A6A1', roughness: 0.48, clearcoat: 0.24, clearcoatRoughness: 0.4 }),
+    head: new MeshPhysicalMaterial({ color: '#12A6A1', roughness: 0.48, clearcoat: 0.24, clearcoatRoughness: 0.4 }),
+    dark: new MeshStandardMaterial({ color: '#17324D', roughness: 0.62, metalness: 0.04 }),
+    darkGloss: new MeshPhysicalMaterial({ color: '#17324D', roughness: 0.42, metalness: 0.06, clearcoat: 0.28 }),
+    blue: new MeshPhysicalMaterial({ color: '#FFC857', roughness: 0.46, clearcoat: 0.25, clearcoatRoughness: 0.4 }),
+    rubber: new MeshStandardMaterial({ color: '#17324D', roughness: 0.88, metalness: 0 }),
+    hub: new MeshStandardMaterial({ color: '#12A6A1', roughness: 0.52, metalness: 0.12 }),
+    metal: new MeshStandardMaterial({ color: '#FFC857', roughness: 0.48, metalness: 0.12 }),
     screen: new MeshPhysicalMaterial({ color: '#060b18', roughness: 0.12, metalness: 0.2, clearcoat: 1 }),
     lensGlass: new MeshPhysicalMaterial({ color: '#0a1830', roughness: 0.05, metalness: 0.3, clearcoat: 1, clearcoatRoughness: 0.05 }),
-    cyanAccent: emissive('#22d3ee', 0.9),
-    purple: emissive('#8b5cf6', 1.2),
+    cyanAccent: emissive('#12A6A1', 0.55),
+    purple: emissive('#F26B5B', 0.75),
     vent: new MeshStandardMaterial({ color: '#0d1426', roughness: 0.8, side: DoubleSide }),
     // animated
-    eyes: emissive('#22d3ee', 1.8),
-    frontLed: emissive('#22d3ee', 1.4),
-    accentLed: emissive('#38e1ff', 1.1),
-    lens: emissive('#3fe0ff', 2.2),
+    eyes: emissive('#12A6A1', 1.25),
+    frontLed: emissive('#FFC857', 0.9),
+    accentLed: emissive('#12A6A1', 0.65),
+    lens: emissive('#12A6A1', 1.5),
   };
 }
 

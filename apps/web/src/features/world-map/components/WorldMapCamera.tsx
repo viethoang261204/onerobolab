@@ -2,6 +2,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import { type PerspectiveCamera, Vector3 } from 'three';
 import { useSettingsStore } from '../../settings/settings-store';
+import type { MapInsets } from '../world-map.types';
 
 export interface CameraFocus {
   /** 'overview' = whole journey; 'selected' = lean towards a world. */
@@ -14,7 +15,7 @@ interface WorldMapCameraProps {
   /** Centre of the whole route (overview target). */
   center: { x: number; z: number };
   /** Screen space covered by HTML panels (px), so the target lands in the visible area. */
-  insets: { left: number; right: number };
+  insets: MapInsets;
 }
 
 /** View direction: from the front, looking down ~38°. */
@@ -25,8 +26,8 @@ const ZOOM_LIMIT = [0.62, 1.25] as const;
 
 /**
  * Map camera: a fixed viewing angle (no free orbit), with gentle drag-to-pan
- * and wheel zoom inside limits. Selecting a world eases the view towards it;
- * entering a world flies in close. Reduced motion snaps instead of easing.
+ * and wheel / pinch zoom inside limits. Selecting a world eases the view
+ * towards it. Reduced motion snaps instead of easing.
  */
 export function WorldMapCamera({ focus, center, insets }: WorldMapCameraProps) {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
@@ -42,23 +43,54 @@ export function WorldMapCamera({ focus, center, insets }: WorldMapCameraProps) {
     pan.current = { x: 0, z: 0 };
   }, [focus.mode, focus.point?.x, focus.point?.z]);
 
-  // Drag = pan, wheel = zoom (both clamped).
+  // Drag = pan, wheel / two-finger pinch = zoom (both clamped).
   useEffect(() => {
     const el = gl.domElement;
+    const pointers = new Map<number, { x: number; y: number }>();
     let drag: { x: number; y: number } | null = null;
+    let pinch = 0;
+
     const unitsPerPx = () => (2 * camera.position.distanceTo(target.current) * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(1, el.clientHeight);
+
     const down = (e: PointerEvent) => {
-      if (e.button === 0) drag = { x: e.clientX, y: e.clientY };
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 1) {
+        drag = { x: e.clientX, y: e.clientY };
+        pinch = 0;
+      } else if (pointers.size === 2) {
+        drag = null;
+        const [p, q] = [...pointers.values()] as [{ x: number; y: number }, { x: number; y: number }];
+        pinch = Math.hypot(p.x - q.x, p.y - q.y);
+      }
     };
     const move = (e: PointerEvent) => {
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 2) {
+        const [p, q] = [...pointers.values()] as [{ x: number; y: number }, { x: number; y: number }];
+        const d = Math.hypot(p.x - q.x, p.y - q.y);
+        if (pinch > 0 && d > 0) {
+          zoom.current = Math.max(ZOOM_LIMIT[0], Math.min(ZOOM_LIMIT[1], zoom.current * (pinch / d)));
+        }
+        pinch = d;
+        return;
+      }
       if (!drag) return;
       const k = unitsPerPx();
       pan.current.x = Math.max(-PAN_LIMIT.x, Math.min(PAN_LIMIT.x, pan.current.x - (e.clientX - drag.x) * k));
       pan.current.z = Math.max(-PAN_LIMIT.z, Math.min(PAN_LIMIT.z, pan.current.z - (e.clientY - drag.y) * k * 1.3));
       drag = { x: e.clientX, y: e.clientY };
     };
-    const up = () => {
-      drag = null;
+    const up = (e: PointerEvent) => {
+      pointers.delete(e.pointerId);
+      pinch = 0;
+      if (pointers.size === 1) {
+        const remaining = [...pointers.values()][0]!;
+        drag = { x: remaining.x, y: remaining.y };
+      } else {
+        drag = null;
+      }
     };
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -67,11 +99,13 @@ export function WorldMapCamera({ focus, center, insets }: WorldMapCameraProps) {
     el.addEventListener('pointerdown', down);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
     el.addEventListener('wheel', wheel, { passive: false });
     return () => {
       el.removeEventListener('pointerdown', down);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
       el.removeEventListener('wheel', wheel);
     };
   }, [gl, camera]);
@@ -88,7 +122,7 @@ export function WorldMapCamera({ focus, center, insets }: WorldMapCameraProps) {
     // Shift so the target sits in the middle of the area not covered by panels.
     const unitsPerPx = (2 * dist * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(1, size.height);
     t.x += ((insets.right - insets.left) / 2) * unitsPerPx + pan.current.x;
-    t.z += pan.current.z;
+    t.z += ((insets.bottom ?? 0) / 2) * unitsPerPx + pan.current.z;
     desired.current.copy(t).addScaledVector(DIR, dist);
 
     const snap = first.current || useSettingsStore.getState().reduceMotion;

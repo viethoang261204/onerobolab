@@ -1,7 +1,9 @@
 import { Check, Lock, Hourglass } from 'lucide-react';
 import { cn } from '../../../utils/cn';
+import { useLocale, useMessages } from '../../i18n/i18n';
 import { EnvironmentThumbnail } from '../../level-selection/components/EnvironmentThumbnail';
-import { WORLD_STATUS_LABEL, type WorldSummary } from '../world-progress';
+import { worldMapMessages } from '../world-map.messages';
+import { worldStatusLabel, type WorldSummary } from '../world-progress';
 import { WorldGlyph } from './WorldGlyph';
 
 interface WorldJourneyListProps {
@@ -10,6 +12,8 @@ interface WorldJourneyListProps {
   /** The world the student is progressing through. */
   currentId: string;
   collapsed: boolean;
+  /** Horizontal pill strip on phone/tablet; vertical rail on desktop. */
+  orientation?: 'vertical' | 'horizontal';
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
 }
@@ -29,16 +33,56 @@ function Thumb({ summary, open }: { summary: WorldSummary; open: boolean }) {
 }
 
 /**
- * Left rail: the journey as a progression tracker — a second, fully
- * accessible way to pick a world. The current world stands out (border,
- * CURRENT, progress); locked worlds stay quiet. Collapses to numbers.
+ * Left rail (desktop) or top scrollable strip (phone/tablet): the journey as a
+ * progression tracker — a second, fully accessible way to pick a world.
  */
-export function WorldJourneyList({ summaries, selectedId, currentId, collapsed, onSelect, onHover }: WorldJourneyListProps) {
+export function WorldJourneyList({ summaries, selectedId, currentId, collapsed, orientation = 'vertical', onSelect, onHover }: WorldJourneyListProps) {
+  const m = useMessages(worldMapMessages);
+  const locale = useLocale();
+
+  if (orientation === 'horizontal') {
+    return (
+      <nav aria-label={m.worldsNavAria} className="pointer-events-auto max-w-full overflow-x-auto rounded-[16px] border border-white/10 bg-[#0a1428]/78 p-1.5 backdrop-blur-md">
+        <ol className="flex w-max items-center gap-1.5">
+          {summaries.map((s) => {
+            const { world, status } = s;
+            const selected = world.id === selectedId;
+            const current = world.id === currentId;
+            const open = status !== 'locked' && status !== 'coming_soon';
+            return (
+              <li key={world.id} className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => onSelect(world.id)}
+                  aria-current={selected ? 'true' : undefined}
+                  aria-label={m.worldItemAria({ order: world.order, name: world.name, status: worldStatusLabel(status, locale), completed: s.completed, total: s.total, current })}
+                  style={{ ['--world' as string]: world.color }}
+                  className={cn(
+                    'flex min-h-11 items-center gap-2 rounded-[11px] border px-2.5 py-1.5 text-left transition-colors duration-[var(--dur-fast)]',
+                    selected ? 'border-[var(--world)]/70 bg-white/[0.1]' : current ? 'border-white/15 bg-white/[0.04]' : 'border-transparent hover:bg-white/[0.05]',
+                  )}
+                >
+                  <span
+                    className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] font-display text-[12px] font-black', open ? 'text-[#07111f]' : 'bg-white/8 text-[#7c8aa5]')}
+                    style={open ? { background: world.color } : undefined}
+                  >
+                    {status === 'completed' ? <Check size={14} strokeWidth={3.2} /> : status === 'coming_soon' ? <Hourglass size={12} /> : !open ? <Lock size={12} /> : world.order}
+                  </span>
+                  <span className={cn('text-[12.5px] font-bold whitespace-nowrap', open ? 'text-white' : 'text-[#8b98b3]')}>{world.name}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+    );
+  }
+
   return (
-    <nav aria-label="Worlds" className={cn('pointer-events-auto flex max-h-full flex-col overflow-hidden rounded-[18px] border border-white/10 bg-[#0a1428]/70 backdrop-blur-md', collapsed ? 'w-[64px]' : 'w-[264px]')}>
+    <nav aria-label={m.worldsNavAria} className={cn('pointer-events-auto flex max-h-full flex-col overflow-hidden rounded-[18px] border border-white/10 bg-[#0a1428]/70 backdrop-blur-md', collapsed ? 'w-[64px]' : 'w-[264px]')}>
       {!collapsed && (
         <div className="px-4 pb-2 pt-3.5">
-          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#9fb0cc]">Your journey</h2>
+          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#9fb0cc]">{m.yourJourney}</h2>
         </div>
       )}
       <ol className={cn('flex-1 space-y-1 overflow-y-auto', collapsed ? 'p-2' : 'px-2 pb-2')}>
@@ -47,7 +91,7 @@ export function WorldJourneyList({ summaries, selectedId, currentId, collapsed, 
           const selected = world.id === selectedId;
           const current = world.id === currentId;
           const open = status !== 'locked' && status !== 'coming_soon';
-          const statusText = status === 'coming_soon' ? 'Coming soon' : !open ? 'Locked' : `${s.completed} / ${s.total} missions`;
+          const statusText = status === 'coming_soon' ? m.worldStatusComingSoon : !open ? m.worldStatusLocked : m.missionsProgress({ completed: s.completed, total: s.total });
           return (
             <li key={world.id}>
               <button
@@ -56,11 +100,11 @@ export function WorldJourneyList({ summaries, selectedId, currentId, collapsed, 
                 onPointerEnter={() => onHover(world.id)}
                 onPointerLeave={() => onHover(null)}
                 aria-current={selected ? 'true' : undefined}
-                aria-label={`World ${world.order}: ${world.name}, ${WORLD_STATUS_LABEL[status]}${s.total ? `, ${s.completed} of ${s.total} missions` : ''}${current ? ', current world' : ''}`}
+                aria-label={m.worldItemAria({ order: world.order, name: world.name, status: worldStatusLabel(status, locale), completed: s.completed, total: s.total, current })}
                 title={collapsed ? world.name : undefined}
                 style={{ ['--world' as string]: world.color }}
                 className={cn(
-                  'flex w-full items-center gap-2.5 rounded-[12px] border p-1.5 text-left transition-colors duration-[var(--dur-fast)]',
+                  'flex min-h-11 w-full items-center gap-2.5 rounded-[12px] border p-1.5 text-left transition-colors duration-[var(--dur-fast)]',
                   selected ? 'border-[var(--world)]/60 bg-white/[0.07]' : current ? 'border-white/15 bg-white/[0.04]' : 'border-transparent hover:bg-white/[0.05]',
                 )}
               >
@@ -80,7 +124,7 @@ export function WorldJourneyList({ summaries, selectedId, currentId, collapsed, 
                       <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[#8fa0bd]">
                         {!open && (status === 'coming_soon' ? <Hourglass size={10} /> : <Lock size={10} />)}
                         <span className="tabular">{statusText}</span>
-                        {current && <span className="ml-auto rounded-[5px] bg-[var(--world)]/20 px-1.5 py-px text-[9.5px] font-black uppercase tracking-[0.12em] text-[var(--world)]">Current</span>}
+                        {current && <span className="ml-auto rounded-[5px] bg-[var(--world)]/20 px-1.5 py-px text-[9.5px] font-black uppercase tracking-[0.12em] text-[var(--world)]">{m.currentBadge}</span>}
                       </span>
                       {current && open && (
                         <span className="mt-1 block h-1 overflow-hidden rounded-full bg-white/10">
